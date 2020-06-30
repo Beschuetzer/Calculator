@@ -201,6 +201,7 @@ function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
     const characterCounts = characterCount(string);
+    string = string.replace(' ', '');
     if (characterCounts['('] === characterCounts[')']) {
         console.log('parentheses match up');
         parenthesesHandled = evaluateParentheses(string);
@@ -268,50 +269,80 @@ function evaluateSubtractionAndAddition(str) {
 }
 
 function getSubStrIndexes(indexOfOperator, string) {
-    let startIndex, endIndex, i = 1;
-    while (string[indexOfOperator - i].match(/[0-9. ]/i)) {
-        startIndex = indexOfOperator - i;
+    let startIndex = 0, endIndex = 0, i = -1;
+    //todo this while loop not working right; not finding the first number in expr
+    console.log(`first char: ${string[indexOfOperator + i]}`);
+    while (string[indexOfOperator + i].match(/[0-9. ]/i)) {
+        console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator - i]: ${string[indexOfOperator + i]}`)
+        startIndex = indexOfOperator + i;
         i--;
+        if (i > indexOfOperator) {
+            console.log('breaking left');
+            break;
+        }
+        console.log(`next char: ${string[indexOfOperator + i - 1]}`);
+
     }
     i = 1;
+    // console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator + i]: ${string[indexOfOperator + i]}`)
     while (string[indexOfOperator + i].match(/[0-9. ]/i)) {
         endIndex = indexOfOperator + i;
         i++;
+        if (i > string.length - indexOfOperator - 1) {
+            // console.log('breaking right');
+            break;
+        }
     }
+    console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
 
-function getNextExpr(string, indexOfOperator) {
-    indexes = getSubStrIndexes(indexOfOperator, string);
-    subStrExpr = string.slice(indexes[0], indexes[1]+1);
-    n1 = string.slice(indexes[0], indexOfOperator);
-    n2 = string.slice(indexOfOperator + 1, indexes[1] + 1);
-    subStrExprResult = add(n1, n2);
+function getNextExpr(string, indexOfOperator, operation) {
+    const indexes = getSubStrIndexes(indexOfOperator, string);
+    let subStrExpr = string.slice(indexes[0], indexes[1] + 1);
+    const n1 = string.slice(indexes[0], indexOfOperator);
+    const n2 = string.slice(indexOfOperator + 1, indexes[1] + 1);
+
+    if (operation === operations.Exponentiation) {
+        subStrExprResult = exponentiate(n1, n2);
+    }
+    else if (operation === operations.Multiply) {
+        subStrExprResult = multiply(n1, n2);
+    }
+    else if (operation === operations.Divide) {
+        subStrExprResult = divide(n1, n2);
+    }
+    else if (operation === operations.Add) {
+        subStrExprResult = add(n1, n2);
+    }
+    else if (operation === operations.Subtract) {
+        subStrExprResult = subtract(n1, n2);
+    }
     console.log(`subStrExpr: ${subStrExpr} of string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
     return string.replace(subStrExpr, subStrExprResult);
-    
 }
 
 function evaluate(string) {
+    string = string.replace(' ', '');
     let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
     if (string.includes(operations.Exponentiation)) {
-        
+        evaluate(getNextExpr(string, string.indexOf(operations.Exponentiation), operations.Exponentiation));
     }
     else if (string.includes(operations.Multiply)) {
-
+        evaluate(getNextExpr(string, string.indexOf(operations.Multiply), operations.Multiply));
     }
     else if (string.includes(operations.Divide)) {
+        evaluate(getNextExpr(string, string.indexOf(operations.Divide), operations.Divide));
     }
     else if (string.includes(operations.Add)) {
-        indexOfOperator = string.indexOf(operations.Add);
-        evaluate(getNextExpr(string, indexOfOperator));
+        evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
     }
     else if (string.includes(operations.Subtract)) {
-        indexOfOperator = string.indexOf(operations.Subtract);
-        evaluate(getNextExpr(string, indexOfOperator));
+        evaluate(getNextExpr(string, string.indexOf(operations.Subtract), operations.Subtract));
     }
     else {
-        return string;
+        console.log(`returning result: ${string.trim()}`);
+        return 1;
     }
 }
 
@@ -378,7 +409,7 @@ function characterCount(string) {
 }
 
 
-const expr = "3+4-6";
+const expr = "13 *4.551 / 6.115";
 const expr2 = "3*5+6-5/4+3";
 // console.table(characterCount('3*5+6-5/4+3'));
 //console.log(calculate(expr));

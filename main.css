@@ -1,6 +1,6 @@
 :root{
     --textbox_text_size: 120px;
-    --font_size_buttons: 4vw;
+    --font_size_buttons: 7vmin;
 }
 *{
     padding: 0px;
