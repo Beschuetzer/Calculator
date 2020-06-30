@@ -28,14 +28,31 @@
     height: 100%;
     justify-self: center;
 }
-.button{
-  font-size: 4vw;  
-  width: 100%;
-  height: 100%;
+button{
+    font-size: 4vw;  
+    width: 100%;
+    height: 100%;
+    color: white;
+    background: linear-gradient(to top, white 50%, black 50%);
+    border: 1px solid white;
+    background-size: 200% 200%;
+    background-position: top;
+    transition: all .25s ease-in;
+}
+button:hover{
+    cursor: pointer;
+    background-position: bottom;
+    color: black;
+    border: 1px solid white;
+}
+.button_press{
+    color: black;
+    border: 1px solid white;
 }
 .textarea{
     grid-area: tb;
-    background-color: yellow;
+    color: white;
+    background-color: black;
     height: 100%;
     width: 100%;
     font-size: var(--textbox_text_size);

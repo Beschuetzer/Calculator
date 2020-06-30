@@ -1,3 +1,191 @@
+window.addEventListener('keydown', keyPress);
+const buttons = document.querySelectorAll('.full-page button');
+for (const button of buttons) {
+    console.log(button);
+    button.addEventListener('click', buttonPress);
+    button.addEventListener('transitionend', tranisitionEnd);
+}
+
+function buttonPress(e) {
+    console.log(e);
+    const textbox = document.getElementById('textbox');
+    switch (e.srcElement.id) {
+        case 'left_parenthesis':
+            textbox.value += '(';
+            break;
+        case 'right_parenthesis':
+            textbox.value += ')';
+            break;
+        case 'nine':
+            textbox.value += '9';
+            break;
+        case 'eight':
+            textbox.value += '8';
+            break;
+        case 'seven':
+            textbox.value += '7';
+            break;
+        case 'six':
+            textbox.value += '6';
+            break;
+        case 'five':
+            textbox.value += '5';
+            break;
+        case 'four':
+            textbox.value += '4';
+            break;
+        case 'three':
+            textbox.value += '3';
+            break;
+        case 'two':
+            textbox.value += '2';
+            break;
+        case 'one':
+            textbox.value += '1';
+            break;
+        case 'zero':
+            textbox.value += '0';
+            break;
+        case 'multiply':
+            textbox.value += '*';
+            break;
+        case 'divide':
+            textbox.value += '/';
+            break;
+        case 'add':
+            textbox.value += '+';
+            break;
+        case 'subtract':
+            textbox.value += '-';
+            break;
+        case 'undo':
+            textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
+            break;
+        case 'clear':
+            textbox.value = '';
+            break;
+        case 'period':
+            //todo need to verify only one dot per number
+            textbox.value += '.';
+            break;
+        case 'equals':
+
+            break;
+    }
+}
+//! don't need keypress if having textbox be modifyable
+function keyPress(e) {
+    console.log(e);
+    const textbox = document.getElementById('textbox');
+    let button;
+    switch (e.key) {
+        case '(':
+            button = document.getElementById('left_parenthesis');
+            button.classList.add('button_press');
+            console.log(button.classList);
+            textbox.value += '(';
+            break;
+        case ')':
+            button = document.getElementById('right_parenthesis');
+            button.classList.add('button_press');
+            textbox.value += ')';
+            break;
+        case '9':
+            button = document.getElementById('nine');
+            button.classList.add('button_press');
+            textbox.value += '9';
+            break;
+        case '8':
+            button = document.getElementById('eight');
+            button.classList.add('button_press');
+            textbox.value += '8';
+            break;
+        case '7':
+            button = document.getElementById('seven');
+            button.classList.add('button_press');
+            textbox.value += '7';
+            break;
+        case '6':
+            button = document.getElementById('six');
+            button.classList.add('button_press');
+            textbox.value += '6';
+            break;
+        case '5':
+            button = document.getElementById('five');
+            button.classList.add('button_press');
+            textbox.value += '5';
+            break;
+        case '4':
+            button = document.getElementById('four');
+            button.classList.add('button_press');
+            textbox.value += '4';
+            break;
+        case '3':button = document.getElementById('three');
+        button.classList.add('button_press');
+            textbox.value += '3';
+            break;
+        case '2':
+            button = document.getElementById('two');
+            button.classList.add('button_press');
+            textbox.value += '2';
+            break;
+        case '1':
+            button = document.getElementById('one');
+            button.classList.add('button_press');
+            textbox.value += '1';
+            break;
+        case '0':
+            button = document.getElementById('zero');
+            button.classList.add('button_press');
+            textbox.value += '0';
+            break;
+        case '*':
+            button = document.getElementById('multiply');
+            button.classList.add('button_press');
+            textbox.value += '*';
+            break;
+        case '/':
+            button = document.getElementById('divide');
+            button.classList.add('button_press');
+            textbox.value += '/';
+            break;
+        case '+':
+            button = document.getElementById('add');
+            button.classList.add('button_press');
+            textbox.value += '+';
+            break;
+        case '-':
+            button = document.getElementById('subtract');
+            button.classList.add('button_press');
+            textbox.value += '-';
+            break;
+        case 'Backspace':
+            button = document.getElementById('undo');
+            button.classList.add('button_press');
+            textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
+            break;
+        case 'Delete':
+            button = document.getElementById('clear');
+            button.classList.add('button_press');
+            textbox.value = '';
+            break;
+        case '.':
+            button = document.getElementById('period');
+            button.classList.add('button_press');
+            //todo need to verify only one dot per number
+            textbox.value += '.';
+            break;
+        case 'Enter':
+            button = document.getElementById('equals');
+            button.classList.add('button_press');
+            break;
+    }
+}
+function tranisitionEnd(e) {
+    console.log(e.target.classList);
+    e.target.classList.remove('button_press');
+}
+
 const operations = {
     Add: '+',
     Divide: '/',
@@ -57,7 +245,7 @@ function evaluateMultiplyAndDivide(string) {
 
 function evaluateSubtractionAndAddition(str) {
     //evaluates the + and - and returns a string
-    alert(str);
+    // alert(str);
     const stringReduced = str.reduce((obj, char) => {
         if (!(char in obj)) {
             obj[char] = [];
