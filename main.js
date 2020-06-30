@@ -1,3 +1,4 @@
+//#region Event Stuff
 window.addEventListener('keydown', keyPress);
 const buttons = document.querySelectorAll('.full-page button');
 for (const button of buttons) {
@@ -120,8 +121,8 @@ function keyPress(e) {
             button.classList.add('button_press');
             textbox.value += '4';
             break;
-        case '3':button = document.getElementById('three');
-        button.classList.add('button_press');
+        case '3': button = document.getElementById('three');
+            button.classList.add('button_press');
             textbox.value += '3';
             break;
         case '2':
@@ -185,16 +186,18 @@ function tranisitionEnd(e) {
     console.log(e.target.classList);
     e.target.classList.remove('button_press');
 }
+//#endregion
 
 const operations = {
     Add: '+',
     Divide: '/',
+    Exponentiation: '^',
     Multiply: '*',
     Subtract: '-',
 }
 const operators = ['(', ')', '*', '/', '+', '-'];
 
-function evaluate(string) {
+function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
     const characterCounts = characterCount(string);
@@ -209,35 +212,42 @@ function evaluate(string) {
     }
 }
 // todo this part needs work
+const expr_test = "(3-(4+(6-5)*2))+6-5.1/(4.2+3)";
 function evaluateParentheses(string) {
     //evaluates the expressions in the parentheses and returns a string
-    // if (!string.includes('(') && !string.includes(')')) {
-    //     alert(`string: ${string} doesn't contain ( or ).`)
-    //     return string;
-    // }
-    // else {
-    //     const startIndex = -1, endIndex = string.length - 1, charCounts;
-    //     tempStr = string;
-    //     //Adjust the while condition to stop when string no longer contains '('?
-    //     while (!tempStr.substring(startIndex + 1, endIndex).includes(')')) {
-    //         //Getting the potential substring (first '(' and ')' with everything in between)
-    //         const startIndex = string.indexOf('(');
-    //         const endIndex = string.indexOf(')');
-    //         tempStr = string.substring(startIndex + 1, endIndex);
-
-    //         charCounts = characterCount(tempStr)
-    //         if (charCounts['('] === charCounts[')']) {
-    //             //we got a valid expression
-    //             const n1, n2, operator;
-
-
-    //         } else {
-    //             //we need to expand the search to the next () by changing the start index
-    //         }
-    //     }
-    // }
+    if (!string.includes('(') && !string.includes(')')) {
+        alert(`string: ${string} doesn't contain ( or ).`)
+        return string;
+    }
+    else {
+        const subStr = getInnerMostExpression(string);
+        const subStrExpr = subStr.slice(1, subStr.length - 1);
+        console.log(`subExpr: ${subStr} of string: ${string}`);
+        const nextExpr = string.substring(subStr, evaluate(subStrExpr));
+        console.log(`nextExpr: ${nextExpr}`);
+        //evaluateParentheses(nextExpr);
+    }
 }
 
+function getInnerMostExpression(string) {
+    const subExprStart = string.indexOf('(');
+    const subExprEnd = string.indexOf(')');
+    if (string.slice(subExprStart, subExprEnd).includes('(')) {
+        console.log('need to find the innermost (');
+        for (let i = 1; i <= string.length - subExprEnd; i++) {
+            const char = string[i];
+            let subStr = string.slice(subExprStart + i, subExprEnd);
+            //console.log(`char: ${char} and subStr ${subStr}`)
+            if (!subStr.includes('(')) {
+                //console.log(`this is the innermost expression: ${subStr}`);
+                return string.slice(subExprStart + i - 1, subExprEnd + 1);
+            }
+        }
+    }
+    else {
+        console.log(`index: ${subExprStart} is the inner most (`);
+    }
+}
 function evaluateMultiplyAndDivide(string) {
     //evaluates the * and / and returns a string
 
@@ -257,25 +267,82 @@ function evaluateSubtractionAndAddition(str) {
     console.log(stringReduced);
 }
 
+function getSubStrIndexes(indexOfOperator, string) {
+    let startIndex, endIndex, i = 1;
+    while (string[indexOfOperator - i].match(/[0-9. ]/i)) {
+        startIndex = indexOfOperator - i;
+        i--;
+    }
+    i = 1;
+    while (string[indexOfOperator + i].match(/[0-9. ]/i)) {
+        endIndex = indexOfOperator + i;
+        i++;
+    }
+    return [startIndex, endIndex];
+}
 
-//#region Finished
-function operate(operation, n1, n2) {
-    if (operation === operations.add) {
-        return add(n1, n2);
+function getNextExpr(string, indexOfOperator) {
+    indexes = getSubStrIndexes(indexOfOperator, string);
+    subStrExpr = string.slice(indexes[0], indexes[1]+1);
+    n1 = string.slice(indexes[0], indexOfOperator);
+    n2 = string.slice(indexOfOperator + 1, indexes[1] + 1);
+    subStrExprResult = add(n1, n2);
+    console.log(`subStrExpr: ${subStrExpr} of string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
+    return string.replace(subStrExpr, subStrExprResult);
+    
+}
+
+function evaluate(string) {
+    let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
+    if (string.includes(operations.Exponentiation)) {
+        
     }
-    else if (operation === operations.Divide) {
-        return divide(n1, n2);
+    else if (string.includes(operations.Multiply)) {
+
     }
-    else if (operation === operations.Multiply) {
-        return multiply(n1, n2);
+    else if (string.includes(operations.Divide)) {
     }
-    else if (operation === operations.Subtract) {
-        return subtract(n1, n2);
+    else if (string.includes(operations.Add)) {
+        indexOfOperator = string.indexOf(operations.Add);
+        evaluate(getNextExpr(string, indexOfOperator));
+    }
+    else if (string.includes(operations.Subtract)) {
+        indexOfOperator = string.indexOf(operations.Subtract);
+        evaluate(getNextExpr(string, indexOfOperator));
+    }
+    else {
+        return string;
     }
 }
 
+// function parseOperations(string){
+//     //!assumes that all the parenthesis have been removed prior
+//     //returns a (operation, n1, n2) tuple
+//     if (!string.includes('(')) {
+//         let operation, n1, n2, operatorPresent;
+//         let operators = ['+', '-', '*', '/', '^'];
+//         if (string.matches(/[*-+/^]/i)) {
+//             console.log(`string (${string} contains an operator`);
+//             if (string.includes('*')) {
+//                 operatorPresent = "*";
+//             }
+
+
+//                 operation = string.indexOf(operatorPresent)
+
+//             return [operation, n1 ,n2];
+
+//         } 
+//         else {
+//             return string;
+//         }
+//     } else {
+//         alert('This should not contain parenthesis')
+//     }
+// }
+
 function add(n1, n2) {
-    return n1 + n2;
+    return parseInt(n1) + parseInt(n2);
 }
 
 function subtract(n1, n2) {
@@ -294,6 +361,10 @@ function divide(n1, n2) {
     return n1 / n2;
 }
 
+function exponentiate(n1, n2) {
+    return n1 ** n2;
+}
+
 function characterCount(string) {
     return Array.from(string).reduce((obj, c) => {
         //console.log(`obj: ${obj} and c: ${c} and obj[c]: ${obj[c]}`);
@@ -305,12 +376,16 @@ function characterCount(string) {
         return obj;
     }, {});
 }
-//#endregion
-const expr = "(3*5)+6-5/(4+3)";
+
+
+const expr = "3+4-6";
 const expr2 = "3*5+6-5/4+3";
 // console.table(characterCount('3*5+6-5/4+3'));
-console.log(evaluate(expr));
+//console.log(calculate(expr));
 //lert(`includes: ${"1{3(4".indexOf('(')}`);
 const expr3 = "3.2+44-511+0.4-1.05";
 //?why doesn't this text work?  Expr is undefined??
-evaluateSubtractionAndAddition(expr);
+//evaluateParentheses(expr_test);
+alert(evaluate(expr));
+
+// module.exports = calculate
