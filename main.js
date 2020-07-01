@@ -278,38 +278,51 @@ function getInnerMostExpression(string) {
 }
 
 function getSubStrIndexes(indexOfOperator, string) {
-    let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextChar;
+    let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true;
-    //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextChar: ${string[nextChar]}`)
-    while (string[(nextChar > 0) ? nextChar : 0].match(/[0-9.\- ]/i)) {
-        nextChar = indexOfOperator - i;
-        console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextChar]: ${string[nextChar]}`)
-        startIndex = nextChar;
+    //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex: ${string[nextCharIndex]}`)
+    while (matchFound) {
+        matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\- ]/i);
+        nextCharIndex = indexOfOperator - i;
+        //console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        startIndex = nextCharIndex;
         i++;
-        if (i > indexOfOperator || string[startIndex] == '-' || startIndex == 0) {
+        if (i >= indexOfOperator || string[startIndex] == '-' || startIndex == 0) {
             //console.log('breaking left');
             break;
         }
     }
     i = 1;
     matchFound = true;
-    //todo need to work on negative exponents
+    //todo need to work on negative exponents (2^2-5 vs 2^-2)
     while (matchFound) {
-        nextChar = indexOfOperator + i;
-        console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextChar]: ${string[nextChar]}`)
+        nextCharIndex = indexOfOperator + i;
+        console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         if (string[indexOfOperator] == '^') {
-            matchFound = string[nextChar].match(/[0-9.\- ]/i)
-        } else {
-            matchFound = string[nextChar].match(/[0-9. ]/i)
+            if (string[indexOfOperator + 1] == '-') {
+                matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
+                console.log(`1 and matchfound: ${matchFound}`);
+            }
+            else {
+                matchFound = string[nextCharIndex].match(/[0-9. ]/i);
+                console.log(`2 and matchfound: ${matchFound}`);
+            }
         }
-        endIndex = nextChar;
+        else {
+            matchFound = string[nextCharIndex].match(/[0-9. ]/i)
+        }
+
+        if (matchFound) {
+            console.log(`matchfound: ${matchFound}`)
+            endIndex = nextCharIndex;
+        }
         i++;
         if (i > string.length - indexOfOperator - 1) {
-            // console.log('breaking right');
+            console.log('breaking right');
             break;
         }
     }
-
+    //alert(5);
     //console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
