@@ -263,7 +263,8 @@ function evaluate(string) {
     //console.log(`STARTING WITH STRING: ${string}`);
     //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
     //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
-    if (string.match(/[0-9]\.[0-9]*e/)) {
+    if (string.match(/^\s*[0-9]\.[0-9]*e\s*$/)) {
+        console.log(`STOPPING HERE --- with ${string}`);
         textbox.value = string;
         return string;
     }
@@ -342,25 +343,32 @@ function getSubStrIndexes(indexOfOperator, string) {
     //!right side of operator
     i = 1;
     matchFound = true;
-    let includeNegativeSign = true;
+    let includeNegativeSign = true, negativeSignCount = 0;
     while (matchFound) {
         nextCharIndex = indexOfOperator + i;
         console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         if (string[indexOfOperator] == '^') {
+            if(string[nextCharIndex] == '-') {
+                negativeSignCount++;
+                console.log(`negCount: ${negativeSignCount}`);
+                if (negativeSignCount > 1) {
+                    break;
+                }
+            }
             if (string[indexOfOperator + 1] == '-') {
                 matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
-                console.log(`i: ${i} and matchfound: ${matchFound}`);
+                console.log(`i-1: ${i} and matchfound: ${matchFound}`);
             }
             else {
                 matchFound = string[nextCharIndex].match(/[0-9. ]/i);
-                console.log(`2 and matchfound: ${matchFound}`);
+                console.log(`i-2: ${i} and matchfound: ${matchFound}`);
             }
         }
         else {
             matchFound = string[nextCharIndex].match(/[0-9. ]/i)
         }
 
-        if (matchFound) {
+        if (matchFound && negativeSignCount <= 1) {
             //console.log(`matchfound: ${matchFound}`)
             endIndex = nextCharIndex;
         }
@@ -463,22 +471,31 @@ function characterCount(string) {
     }, {});
 }
 //#endregion
-// module.exports = evaluate, getSubStrIndexes, getNextExpr;
+
+//#region Testing
 const tests =    ['2^3','-2^3','2^-3','-2^-3',
                 "4^15+10","-4^15-10","-4^-15-10","-4^-15+10", 
                 '4+5', '7-5', '4*5', '4/2', 
-                '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '5-6*2^3-5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)','(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)'];
+                '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '5-6*2^3-5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)','(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
+                "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "-9.313225746154785e-10*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4",
+            ];
 const expected = ['8','-8','0.125','-0.125',
                 "1073741834","-1073741834","−10.000000001","9.999999999",
                 "9", "2", "20", "2", 
-                "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666",'-8.192333333333336'];
+                "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666",'-8.192333333333336',
+                "3.9999999990686774", "-4.000000000931323","-2.3283064365386963e-10","-3.725290298461914e-9",
+            ];
 let allPassed = true;
 for (let i = 0; i < tests.length; i++) {
-    if (calculate(tests[i]) != expected[i]) {
-        alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${calculate(tests[i])} \nPassed: ${calculate(tests[i]) == expected[i]}`);
+    let actual = calculate(tests[i]);
+    if (actual != expected[i]) {
+        alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${actual} \nPassed: ${actual == expected[i]}`);
         allPassed = false;
     }
 }
 if (allPassed) {
     alert(`All ${tests.length} tests passed!`);
 }
+//#endregion
+
+// module.exports = evaluate, getSubStrIndexes, getNextExpr;
