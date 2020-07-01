@@ -77,10 +77,13 @@ function buttonPress(e) {
             textbox.value += '.';
             break;
         case 'equals':
-            evaluate(textbox.value);
+            //evaluate(textbox.value);
+            calculate(textbox.value);
             break;
     }
-    eventRecord.push(textbox.value);
+    if (eventRecord[eventRecord.length - 1] != textbox.value) {
+        eventRecord.push(textbox.value);
+    }
     //console.log(eventRecord);
 
 }
@@ -203,10 +206,13 @@ function keyPress(e) {
         case 'Enter':
             button = document.getElementById('equals');
             button.classList.add('button_press');
-            evaluate(textbox.value);
+            //evaluate(textbox.value);
+            calculate(textbox.value);
             break;
     }
-    eventRecord.push(textbox.value);
+    if (eventRecord[eventRecord.length - 1] != textbox.value) {
+        eventRecord.push(textbox.value);
+    }
     //console.log(eventRecord);
 
 }
@@ -234,8 +240,7 @@ function calculate(string) {
     if (characterCounts['('] === characterCounts[')']) {
         console.log('parentheses match up');
         parenthesesHandled = evaluateParentheses(string);
-        multiplyAndDivideHandled = evaluateMultiplyAndDivide(parenthesesHandled);
-        return evaluateSubtractionAndAddition(multiplyAndDivideHandled);
+        evaluateParentheses(parenthesesHandled);
     } else {
         console.log('parentheses mismatch');
         return "Error.  Parentheses Mismatch";
@@ -246,15 +251,20 @@ const expr_test = "(3-(4+(6-5)*2))+6-5.1/(4.2+3)";
 function evaluateParentheses(string) {
     //evaluates the expressions in the parentheses and returns a string
     if (!string.includes('(') && !string.includes(')')) {
-        alert(`string: ${string} doesn't contain ( or ).`)
-        return string;
+        evaluate(string);
     }
     else {
         const subStr = getInnerMostExpression(string);
         const subStrExpr = subStr.slice(1, subStr.length - 1);
-        console.log(`subExpr: ${subStr} of string: ${string}`);
-        const nextExpr = string.substring(subStr, evaluate(subStrExpr));
+        console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
+        const nextExpr = string.replace(subStr, evaluate(subStrExpr));
         console.log(`nextExpr: ${nextExpr}`);
+        alert(5);
+        if (nextExpr.includes('(')) {
+            evaluateParentheses(nextExpr);
+        } else {
+            evaluate(nextExpr);
+        }
         //evaluateParentheses(nextExpr);
     }
 }
@@ -388,6 +398,7 @@ const evaluate = function (string) {
     else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
         console.log(`skipping start with - result: ${string.trim()}`);
         textbox.value = string;
+        return string;
     }
     else if (string.includes(operations.Subtract)) {
         let indexOfOperator = string.indexOf(operations.Subtract);
@@ -399,6 +410,8 @@ const evaluate = function (string) {
     else {
         console.log(`returning result: ${string.trim()}`);
         textbox.value = string;
+        alert(string);
+        //return string;
     }
 }
 //#endregion 
@@ -440,5 +453,6 @@ function characterCount(string) {
 }
 //#endregion
 
-module.exports = evaluate, getSubStrIndexes, getNextExpr;   
+// module.exports = evaluate, getSubStrIndexes, getNextExpr;
 const expr4 = "5−6×2^3−5×6";
+alert(evaluate("5*6+3"));
