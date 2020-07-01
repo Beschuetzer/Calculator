@@ -234,7 +234,9 @@ function calculate(string) {
     if (characterCounts['('] === characterCounts[')']) {
         console.log('parentheses match up');
         parenthesesHandled = evaluateParentheses(string);
-        return evaluateParentheses(parenthesesHandled);
+        let result = evaluateParentheses(parenthesesHandled);
+        textbox.value = result;
+        return result;
     } else {
         console.log('parentheses mismatch');
         return "Error.  Parentheses Mismatch";
@@ -263,10 +265,12 @@ function evaluate(string) {
     //console.log(`STARTING WITH STRING: ${string}`);
     //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
     //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
-    alert('evaluating');
-    if (string.match(/^\s*[0-9]\.[0-9]*e\s*$/)) {
+    //alert('evaluating');
+    if (string[0] == '+') {
+        string = string.slice(1);
+    }
+    if (string.match(/^\s*\-*[0-9]\.[0-9]*e\-*\s*[0-9]*$/) || string.match(/Imaginary/i)) {
         console.log(`STOPPING HERE --- with ${string}`);
-        textbox.value = string;
         return string;
     }
     else if (string.includes(operations.Exponentiation)) {
@@ -283,7 +287,6 @@ function evaluate(string) {
     }
     else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
         console.log(`skipping start with - result: ${string.trim()}`);
-        textbox.value = string;
         return string;
     }
     else if (string.includes(operations.Subtract)) {
@@ -295,7 +298,6 @@ function evaluate(string) {
     }
     else {
         console.log(`returning result: ${string.trim()}`);
-        textbox.value = string;
         //alert(string);
         return string;
     }
@@ -327,17 +329,17 @@ function getSubStrIndexes(indexOfOperator, string) {
     while (matchFound) {
         nextCharIndex = indexOfOperator - i;
         if (string[indexOfOperator] == '-') {
-            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\- ]/i);
+            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\-e ]/i);
 
         }
         else {
-            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\- ]/i);
+            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\-e ]/i);
         }
-        //console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         startIndex = nextCharIndex;
         i++;
-        if (i > indexOfOperator || string[startIndex] == '-' || startIndex == 0) {
-            //console.log('breaking left');
+        if (i > indexOfOperator || (string[startIndex] == '-' && string[(startIndex - 1 >= 0) ? startIndex - 1 : startIndex] != 'e') || startIndex == 0) {
+            console.log('breaking left');
             break;
         }
     }
@@ -457,6 +459,9 @@ function divide(n1, n2) {
 }
 
 function exponentiate(n1, n2) {
+    if (n1 < 0 && (n2 > 0 && n2 < 1 || n2 < 0 && n2 > -1)){
+        return "Imaginary";
+    }
     return Math.pow(n1, n2);
 }
 
@@ -476,20 +481,20 @@ function characterCount(string) {
 
 //#region Testing
 const tests = [
+    "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "-9.313225746154785e-10*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4",
+    "4^(1/4)+10", "-4^(3/4)-10", "-4^-(1/4)-10", "4^-(3/4)+10",
     "4^15+10", "-4^15-10", "-4^-15-10", "-4^-15+10",
-    "4^(1/4)+10", "-4^(3/4)-10", "-4^-(1/4)-10", "-4^-(3/4)+10",
     '2^3', '-2^3', '2^-3', '-2^-3',
     '4+5', '7-5', '4*5', '4/2',
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '5-6*2^3-5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
-    "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "-9.313225746154785e-10*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4",
 ];
 const expected = [
-    "1073741834", "-1073741834", "−10.000000001", "9.999999999",
-    "11.414213562", "−12.828427125", "−10.707106781", "9.646446609",
+    `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`,
+    "11.414213562373096", "Imaginary-10", "Imaginary-10", "10.353553390593273",
+    "1073741834", "-1073741834", "-10.000000000931323", "9.999999999068677",
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
     "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
-    "3.9999999990686774", "-4.000000000931323", "-2.3283064365386963e-10", "-3.725290298461914e-9",
 ];
 let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1;
 for (let i = 0; i < tests.length; i++) {
