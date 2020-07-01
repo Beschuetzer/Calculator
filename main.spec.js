@@ -1,4 +1,6 @@
-const evaluate = require('./evaluate')
+import evaluate from './evaluate';
+import getNextExpr from './getNextExpr';
+import getSubStrIndexes from './getSubStrIndexes';
 
 describe('evaluate', function () {
   it('simple addition', function () {

@@ -215,6 +215,7 @@ function tranisitionEnd(e) {
     e.target.classList.remove('button_press');
 }
 //#endregion
+//#region Initialization Stuff
 const operations = {
     Add: '+',
     Divide: '/',
@@ -223,7 +224,8 @@ const operations = {
     Subtract: '-',
 }
 const operators = ['(', ')', '*', '/', '+', '-'];
-
+//#endregion 
+//#region Main Logic
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
@@ -399,6 +401,7 @@ const evaluate = function (string) {
         textbox.value = string;
     }
 }
+//#endregion 
 //#region Helper Fn
 function add(n1, n2) {
     return parseInt(n1) + parseInt(n2);
@@ -437,15 +440,5 @@ function characterCount(string) {
 }
 //#endregion
 
-const expr = "13 *4.551 / 6.115";
-const expr2 = "3*5+ 6- 5/4 ^ 3";
+module.exports = evaluate, getSubStrIndexes, getNextExpr;   
 const expr4 = "5−6×2^3−5×6";
-
-// console.table(characterCount('3*5+6-5/4+3'));
-//console.log(calculate(expr));
-//lert(`includes: ${"1{3(4".indexOf('(')}`);
-const expr3 = "3-4+6-5*2+6-5.1/4.2+3";
-//?why doesn't this text work?  Expr is undefined??
-//evaluateParentheses(expr_test);
-
-// module.exports = evaluate
