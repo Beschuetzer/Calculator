@@ -4,13 +4,13 @@ let eventRecord = [];
 const textbox = document.getElementById('textbox');
 const buttons = document.querySelectorAll('.full-page button');
 for (const button of buttons) {
-    console.log(button);
+    //console.log(button);
     button.addEventListener('click', buttonPress);
     button.addEventListener('transitionend', tranisitionEnd);
 }
 
 function buttonPress(e) {
-    console.log(e);
+    //console.log(e);
     switch (e.srcElement.id) {
         case 'left_parenthesis':
             textbox.value += '(';
@@ -81,11 +81,11 @@ function buttonPress(e) {
             break;
     }
     eventRecord.push(textbox.value);
-    console.log(eventRecord);
+    //console.log(eventRecord);
 
 }
 function keyPress(e) {
-    console.log(e);
+    //console.log(e);
     const textbox = document.getElementById('textbox');
     let button;
     switch (e.key) {
@@ -207,11 +207,11 @@ function keyPress(e) {
             break;
     }
     eventRecord.push(textbox.value);
-    console.log(eventRecord);
+    //console.log(eventRecord);
 
 }
 function tranisitionEnd(e) {
-    console.log(e.target.classList);
+    //console.log(e.target.classList);
     e.target.classList.remove('button_press');
 }
 //#endregion
@@ -278,21 +278,31 @@ function getInnerMostExpression(string) {
 }
 
 function getSubStrIndexes(indexOfOperator, string) {
-    let startIndex = 0, endIndex = 0, i = 1, adjustment = 0;
-    //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator - i]: ${string[indexOfOperator - i]}`)
-    while (string[indexOfOperator - i].match(/[0-9.\- ]/i)) {
-        console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator - i]: ${string[indexOfOperator - i]}`)
-        startIndex = indexOfOperator - i;
+    let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextChar;
+    let matchFound = true;
+    //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextChar: ${string[nextChar]}`)
+    while (string[(nextChar > 0) ? nextChar : 0].match(/[0-9.\- ]/i)) {
+        nextChar = indexOfOperator - i;
+        console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextChar]: ${string[nextChar]}`)
+        startIndex = nextChar;
         i++;
-        if (i >= indexOfOperator || string[startIndex] == '-') {
+        if (i > indexOfOperator || string[startIndex] == '-' || startIndex == 0) {
             //console.log('breaking left');
             break;
         }
     }
     i = 1;
-    // console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator + i]: ${string[indexOfOperator + i]}`)
-    while (string[indexOfOperator + i].match(/[0-9. ]/i)) {
-        endIndex = indexOfOperator + i;
+    matchFound = true;
+    //todo need to work on negative exponents
+    while (matchFound) {
+        nextChar = indexOfOperator + i;
+        console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextChar]: ${string[nextChar]}`)
+        if (string[indexOfOperator] == '^') {
+            matchFound = string[nextChar].match(/[0-9.\- ]/i)
+        } else {
+            matchFound = string[nextChar].match(/[0-9. ]/i)
+        }
+        endIndex = nextChar;
         i++;
         if (i > string.length - indexOfOperator - 1) {
             // console.log('breaking right');
@@ -329,8 +339,10 @@ function getNextExpr(string, indexOfOperator, operation) {
     return string.replace(subStrExpr, subStrExprResult);
 }
 
-function evaluate(string) {
+const evaluate = function (string) {
     let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
+    //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
+    //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
     if (string.includes(operations.Exponentiation)) {
         evaluate(getNextExpr(string, string.indexOf(operations.Exponentiation), operations.Exponentiation));
     }
@@ -408,4 +420,4 @@ const expr3 = "3-4+6-5*2+6-5.1/4.2+3";
 //?why doesn't this text work?  Expr is undefined??
 //evaluateParentheses(expr_test);
 
-// module.exports = calculate
+// module.exports = evaluate
