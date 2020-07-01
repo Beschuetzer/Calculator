@@ -36,6 +36,6 @@ describe('evaluate', function () {
   })
 
   it('advanced expr2 parenthesis', function () {
-    expect(evaluate('(3-(4+6-5*2))+6-5.1/(4.2+3)')).toEqual('8.291666667');
+    expect(evaluate('(3-(4+6-5*2))+6-5.1/(4.2+3)')).toEqual('8.291666666666666');
   })
 });

@@ -240,18 +240,16 @@ function calculate(string) {
     if (characterCounts['('] === characterCounts[')']) {
         console.log('parentheses match up');
         parenthesesHandled = evaluateParentheses(string);
-        evaluateParentheses(parenthesesHandled);
+        return evaluateParentheses(parenthesesHandled);
     } else {
         console.log('parentheses mismatch');
         return "Error.  Parentheses Mismatch";
     }
 }
-// todo this part needs work
-const expr_test = "(3-(4+(6-5)*2))+6-5.1/(4.2+3)";
 function evaluateParentheses(string) {
     //evaluates the expressions in the parentheses and returns a string
     if (!string.includes('(') && !string.includes(')')) {
-        evaluate(string);
+        return evaluate(string);
     }
     else {
         const subStr = getInnerMostExpression(string);
@@ -259,13 +257,52 @@ function evaluateParentheses(string) {
         console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
         const nextExpr = string.replace(subStr, evaluate(subStrExpr));
         console.log(`nextExpr: ${nextExpr}`);
-        alert(5);
+        //alert(5);
         if (nextExpr.includes('(')) {
-            evaluateParentheses(nextExpr);
+            return evaluateParentheses(nextExpr);
         } else {
-            evaluate(nextExpr);
+            return evaluate(nextExpr);
         }
-        //evaluateParentheses(nextExpr);
+    }
+}
+function evaluate(string) {
+    let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
+    console.log(`STARTING WITH STRING: ${string}`);
+    //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
+    //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
+    if (string.match(/[0-9]\.[0-9]*e/)) {
+        textbox.value = string;
+        return string;
+    }
+    else if (string.includes(operations.Exponentiation)) {
+        return evaluate(getNextExpr(string, string.indexOf(operations.Exponentiation), operations.Exponentiation));
+    }
+    else if (string.includes(operations.Multiply)) {
+        return evaluate(getNextExpr(string, string.indexOf(operations.Multiply), operations.Multiply));
+    }
+    else if (string.includes(operations.Divide)) {
+        return evaluate(getNextExpr(string, string.indexOf(operations.Divide), operations.Divide));
+    }
+    else if (string.includes(operations.Add)) {
+        return evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
+    }
+    else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
+        console.log(`skipping start with - result: ${string.trim()}`);
+        textbox.value = string;
+        return string;
+    }
+    else if (string.includes(operations.Subtract)) {
+        let indexOfOperator = string.indexOf(operations.Subtract);
+        if (string.match(/-.+-/i)) {
+            indexOfOperator = string.lastIndexOf(operations.Subtract);
+        }
+        return evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
+    }
+    else {
+        console.log(`returning result: ${string.trim()}`);
+        textbox.value = string;
+        //alert(string);
+        return string;
     }
 }
 
@@ -293,7 +330,7 @@ function getSubStrIndexes(indexOfOperator, string) {
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true;
     //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex: ${string[nextCharIndex]}`)
-    //todo need to work on first while loop working with (added band-aid below  )
+    //!Left side of operator
     while (matchFound) {
         nextCharIndex = indexOfOperator - i;
         if (string[indexOfOperator] == '-') {
@@ -311,6 +348,7 @@ function getSubStrIndexes(indexOfOperator, string) {
             break;
         }
     }
+    //!right side of operator
     i = 1;
     matchFound = true;
     while (matchFound) {
@@ -341,11 +379,10 @@ function getSubStrIndexes(indexOfOperator, string) {
         }
     }
 
-
     //todo this is a bandaind because I can't figure out how to get the left side of getSubStrIndexes while loop right.
     let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
     if (!firstSubStrExprChar.match(/[0-9\-]/i)) {
-        console.log(`need to remove ${firstSubStrExprChar}`);
+        console.log(`need to remove ${firstSubStrExprChar} from string: ${string}`);
         startIndex += 1;
     }
     // alert(5);
@@ -374,50 +411,26 @@ function getNextExpr(string, indexOfOperator, operation) {
     else if (operation === operations.Subtract) {
         subStrExprResult = subtract(n1, n2);
     }
+    //!adding a '-' to subexpressions that start with a negative sign but the result is positive
+    let condition = subStrExpr[0] == '-' && subStrExprResult[0] != '-';
+    let condition2 = parseFloat(subStrExpr) < 0 && parseFloat(subStrExprResult) > 0;
+    if (condition2) {
+        console.log(`ADDING '+' --- subStrExpr: ${subStrExpr} and subStrExprResult: ${subStrExprResult}`);
+        subStrExprResult = '+' + subStrExprResult;
+    }
+    //alert(1);
     console.log(`subStrExpr: ${subStrExpr} of string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
-    return string.replace(subStrExpr, subStrExprResult);
-}
-
-const evaluate = function (string) {
-    let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
-    console.log(`STARTING WITH STRING: ${string}`);
-    //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
-    //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
-    if (string.includes(operations.Exponentiation)) {
-        evaluate(getNextExpr(string, string.indexOf(operations.Exponentiation), operations.Exponentiation));
+    nextExpr = string.replace(subStrExpr, subStrExprResult);
+    //!removes the + sign if it is at the beginning of the nextExpr
+    if(nextExpr[0] == '-') {
+        nextExpr = nextExpr.slice(1);
     }
-    else if (string.includes(operations.Multiply)) {
-        evaluate(getNextExpr(string, string.indexOf(operations.Multiply), operations.Multiply));
-    }
-    else if (string.includes(operations.Divide)) {
-        evaluate(getNextExpr(string, string.indexOf(operations.Divide), operations.Divide));
-    }
-    else if (string.includes(operations.Add)) {
-        evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
-    }
-    else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
-        console.log(`skipping start with - result: ${string.trim()}`);
-        textbox.value = string;
-        return string;
-    }
-    else if (string.includes(operations.Subtract)) {
-        let indexOfOperator = string.indexOf(operations.Subtract);
-        if (string.match(/-.+-/i)) {
-            indexOfOperator = string.lastIndexOf(operations.Subtract);
-        }
-        evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
-    }
-    else {
-        console.log(`returning result: ${string.trim()}`);
-        textbox.value = string;
-        alert(string);
-        //return string;
-    }
+    return nextExpr;
 }
 //#endregion 
 //#region Helper Fn
 function add(n1, n2) {
-    return parseInt(n1) + parseInt(n2);
+    return parseFloat(n1) + parseFloat(n2);
 }
 
 function subtract(n1, n2) {
@@ -452,7 +465,36 @@ function characterCount(string) {
     }, {});
 }
 //#endregion
-
 // module.exports = evaluate, getSubStrIndexes, getNextExpr;
-const expr4 = "5−6×2^3−5×6";
-alert(evaluate("5*6+3"));
+const tests = ['4+5', '7-5', '4*5', '4/2', '(5+4)/3','(5+4)*3', '3*5+6-5/4+3', '5−6*2^3−5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)',];
+const expected = ["9", "2", "20", "2", "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666",]
+for (let i = 0; i < tests.length; i++) {
+    alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${calculate(tests[i])} \nPassed: ${calculate(tests[i]) == expected[i]}`);
+}
+
+// it('simple parenthesis /', function () {
+//   expect(evaluate('(5+4)/3')).toEqual('3');
+// })
+// it('simple parenthesis *', function () {
+//   expect(evaluate('(5+4)*3')).toEqual('27');
+// })
+// it('advanced expr no parenthesis', function () {
+//   expect(evaluate('3*5+6-5/4+3')).toEqual('22.75');
+// })
+// it('advanced expr2 no parenthesis', function () {
+//   expect(evaluate('5−6×2^3−5×6')).toEqual('-73');
+// })
+// it('advanced expr3 no parenthesis', function () {
+//   expect(evaluate('3.5*5.6+6-5.1/4.4+3')).toEqual('27.440909091');
+// })
+
+// it('advanced expr parenthesis', function () {
+//   expect(evaluate('(3*5)+6-5/(7+3)')).toEqual('20.5');
+// })
+
+// it('advanced expr2 parenthesis', function () {
+//   expect(evaluate('(3-(4+6-5*2))+6-5.1/(4.2+3)')).toEqual('8.291666666666666');
+// })
+// });
+
+//todo add condition to insert - if the expr starts with - but the subexpr is positive
