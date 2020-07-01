@@ -281,31 +281,37 @@ function getSubStrIndexes(indexOfOperator, string) {
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true;
     //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex: ${string[nextCharIndex]}`)
+    //todo need to work on first while loop working with (added band-aid below  )
     while (matchFound) {
-        matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\- ]/i);
         nextCharIndex = indexOfOperator - i;
+        if (string[indexOfOperator] == '-') {
+            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\- ]/i);
+
+        }
+        else {
+            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\- ]/i);
+        }
         //console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         startIndex = nextCharIndex;
         i++;
-        if (i >= indexOfOperator || string[startIndex] == '-' || startIndex == 0) {
+        if (i > indexOfOperator || string[startIndex] == '-' || startIndex == 0) {
             //console.log('breaking left');
             break;
         }
     }
     i = 1;
     matchFound = true;
-    //todo need to work on negative exponents (2^2-5 vs 2^-2)
     while (matchFound) {
         nextCharIndex = indexOfOperator + i;
-        console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        //console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         if (string[indexOfOperator] == '^') {
             if (string[indexOfOperator + 1] == '-') {
                 matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
-                console.log(`1 and matchfound: ${matchFound}`);
+                //console.log(`1 and matchfound: ${matchFound}`);
             }
             else {
                 matchFound = string[nextCharIndex].match(/[0-9. ]/i);
-                console.log(`2 and matchfound: ${matchFound}`);
+                //console.log(`2 and matchfound: ${matchFound}`);
             }
         }
         else {
@@ -313,16 +319,24 @@ function getSubStrIndexes(indexOfOperator, string) {
         }
 
         if (matchFound) {
-            console.log(`matchfound: ${matchFound}`)
+            //console.log(`matchfound: ${matchFound}`)
             endIndex = nextCharIndex;
         }
         i++;
         if (i > string.length - indexOfOperator - 1) {
-            console.log('breaking right');
+            //console.log('breaking right');
             break;
         }
     }
-    //alert(5);
+
+
+    //todo this is a bandaind because I can't figure out how to get the left side of getSubStrIndexes while loop right.
+    let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
+    if (!firstSubStrExprChar.match(/[0-9\-]/i)) {
+        console.log(`need to remove ${firstSubStrExprChar}`);
+        startIndex += 1;
+    }
+    // alert(5);
     //console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
@@ -354,6 +368,7 @@ function getNextExpr(string, indexOfOperator, operation) {
 
 const evaluate = function (string) {
     let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
+    console.log(`STARTING WITH STRING: ${string}`);
     //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
     //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
     if (string.includes(operations.Exponentiation)) {
