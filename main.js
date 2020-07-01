@@ -1,5 +1,7 @@
 //#region Event Stuff
 window.addEventListener('keydown', keyPress);
+let eventRecord = [];
+const textbox = document.getElementById('textbox');
 const buttons = document.querySelectorAll('.full-page button');
 for (const button of buttons) {
     console.log(button);
@@ -9,7 +11,6 @@ for (const button of buttons) {
 
 function buttonPress(e) {
     console.log(e);
-    const textbox = document.getElementById('textbox');
     switch (e.srcElement.id) {
         case 'left_parenthesis':
             textbox.value += '(';
@@ -47,6 +48,9 @@ function buttonPress(e) {
         case 'zero':
             textbox.value += '0';
             break;
+        case 'exponentiation':
+            textbox.value += '^';
+            break;
         case 'multiply':
             textbox.value += '*';
             break;
@@ -60,21 +64,26 @@ function buttonPress(e) {
             textbox.value += '-';
             break;
         case 'undo':
-            textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
+            //textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
+            textbox.value = eventRecord[eventRecord.length - 1];
+            eventRecord.pop(2);
             break;
         case 'clear':
             textbox.value = '';
+            eventRecord = [];
             break;
         case 'period':
             //todo need to verify only one dot per number
             textbox.value += '.';
             break;
         case 'equals':
-
+            evaluate(textbox.value);
             break;
     }
+    eventRecord.push(textbox.value);
+    console.log(eventRecord);
+
 }
-//! don't need keypress if having textbox be modifyable
 function keyPress(e) {
     console.log(e);
     const textbox = document.getElementById('textbox');
@@ -140,6 +149,11 @@ function keyPress(e) {
             button.classList.add('button_press');
             textbox.value += '0';
             break;
+        case '^':
+            button = document.getElementById('exponentiation');
+            button.classList.add('button_press');
+            textbox.value += '^';
+            break;
         case '*':
             button = document.getElementById('multiply');
             button.classList.add('button_press');
@@ -163,12 +177,22 @@ function keyPress(e) {
         case 'Backspace':
             button = document.getElementById('undo');
             button.classList.add('button_press');
-            textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
+            // textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
+            console.log(`changing to event: ${eventRecord[eventRecord.length - 2]}`)
+            if (eventRecord[eventRecord.length - 2] === undefined) {
+                textbox.value = ""
+            }
+            else {
+                textbox.value = eventRecord[eventRecord.length - 2];
+            }
+            eventRecord.pop();
+            eventRecord.pop();
             break;
         case 'Delete':
             button = document.getElementById('clear');
             button.classList.add('button_press');
             textbox.value = '';
+            eventRecord = [];
             break;
         case '.':
             button = document.getElementById('period');
@@ -179,15 +203,18 @@ function keyPress(e) {
         case 'Enter':
             button = document.getElementById('equals');
             button.classList.add('button_press');
+            evaluate(textbox.value);
             break;
     }
+    eventRecord.push(textbox.value);
+    console.log(eventRecord);
+
 }
 function tranisitionEnd(e) {
     console.log(e.target.classList);
     e.target.classList.remove('button_press');
 }
 //#endregion
-
 const operations = {
     Add: '+',
     Divide: '/',
@@ -249,39 +276,18 @@ function getInnerMostExpression(string) {
         console.log(`index: ${subExprStart} is the inner most (`);
     }
 }
-function evaluateMultiplyAndDivide(string) {
-    //evaluates the * and / and returns a string
-
-}
-
-function evaluateSubtractionAndAddition(str) {
-    //evaluates the + and - and returns a string
-    // alert(str);
-    const stringReduced = str.reduce((obj, char) => {
-        if (!(char in obj)) {
-            obj[char] = [];
-        }
-        obj[char].push(i);
-        obj['i']++;
-        return obj;
-    }, { i: 0 });
-    console.log(stringReduced);
-}
 
 function getSubStrIndexes(indexOfOperator, string) {
-    let startIndex = 0, endIndex = 0, i = -1;
-    //todo this while loop not working right; not finding the first number in expr
-    console.log(`first char: ${string[indexOfOperator + i]}`);
-    while (string[indexOfOperator + i].match(/[0-9. ]/i)) {
-        console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator - i]: ${string[indexOfOperator + i]}`)
-        startIndex = indexOfOperator + i;
-        i--;
-        if (i > indexOfOperator) {
-            console.log('breaking left');
+    let startIndex = 0, endIndex = 0, i = 1, adjustment = 0;
+    //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator - i]: ${string[indexOfOperator - i]}`)
+    while (string[indexOfOperator - i].match(/[0-9.\- ]/i)) {
+        console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator - i]: ${string[indexOfOperator - i]}`)
+        startIndex = indexOfOperator - i;
+        i++;
+        if (i >= indexOfOperator || string[startIndex] == '-') {
+            //console.log('breaking left');
             break;
         }
-        console.log(`next char: ${string[indexOfOperator + i - 1]}`);
-
     }
     i = 1;
     // console.log(`string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[indexOfOperator + i]: ${string[indexOfOperator + i]}`)
@@ -293,7 +299,8 @@ function getSubStrIndexes(indexOfOperator, string) {
             break;
         }
     }
-    console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
+
+    //console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
 
@@ -323,7 +330,6 @@ function getNextExpr(string, indexOfOperator, operation) {
 }
 
 function evaluate(string) {
-    string = string.replace(' ', '');
     let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
     if (string.includes(operations.Exponentiation)) {
         evaluate(getNextExpr(string, string.indexOf(operations.Exponentiation), operations.Exponentiation));
@@ -337,41 +343,23 @@ function evaluate(string) {
     else if (string.includes(operations.Add)) {
         evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
     }
+    else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
+        console.log(`skipping start with - result: ${string.trim()}`);
+        textbox.value = string;
+    }
     else if (string.includes(operations.Subtract)) {
-        evaluate(getNextExpr(string, string.indexOf(operations.Subtract), operations.Subtract));
+        let indexOfOperator = string.indexOf(operations.Subtract);
+        if (string.match(/-.+-/i)) {
+            indexOfOperator = string.lastIndexOf(operations.Subtract);
+        }
+        evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
     }
     else {
         console.log(`returning result: ${string.trim()}`);
-        return 1;
+        textbox.value = string;
     }
 }
-
-// function parseOperations(string){
-//     //!assumes that all the parenthesis have been removed prior
-//     //returns a (operation, n1, n2) tuple
-//     if (!string.includes('(')) {
-//         let operation, n1, n2, operatorPresent;
-//         let operators = ['+', '-', '*', '/', '^'];
-//         if (string.matches(/[*-+/^]/i)) {
-//             console.log(`string (${string} contains an operator`);
-//             if (string.includes('*')) {
-//                 operatorPresent = "*";
-//             }
-
-
-//                 operation = string.indexOf(operatorPresent)
-
-//             return [operation, n1 ,n2];
-
-//         } 
-//         else {
-//             return string;
-//         }
-//     } else {
-//         alert('This should not contain parenthesis')
-//     }
-// }
-
+//#region Helper Fn
 function add(n1, n2) {
     return parseInt(n1) + parseInt(n2);
 }
@@ -407,16 +395,17 @@ function characterCount(string) {
         return obj;
     }, {});
 }
-
+//#endregion
 
 const expr = "13 *4.551 / 6.115";
-const expr2 = "3*5+6-5/4+3";
+const expr2 = "3*5+ 6- 5/4 ^ 3";
+const expr4 = "5−6×2^3−5×6";
+
 // console.table(characterCount('3*5+6-5/4+3'));
 //console.log(calculate(expr));
 //lert(`includes: ${"1{3(4".indexOf('(')}`);
-const expr3 = "3.2+44-511+0.4-1.05";
+const expr3 = "3-4+6-5*2+6-5.1/4.2+3";
 //?why doesn't this text work?  Expr is undefined??
 //evaluateParentheses(expr_test);
-alert(evaluate(expr));
 
 // module.exports = calculate
