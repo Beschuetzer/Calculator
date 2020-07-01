@@ -64,9 +64,7 @@ function buttonPress(e) {
             textbox.value += '-';
             break;
         case 'undo':
-            //textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
-            textbox.value = eventRecord[eventRecord.length - 1];
-            eventRecord.pop(2);
+            undoTextbox();
             break;
         case 'clear':
             textbox.value = '';
@@ -181,15 +179,7 @@ function keyPress(e) {
             button = document.getElementById('undo');
             button.classList.add('button_press');
             // textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
-            console.log(`changing to event: ${eventRecord[eventRecord.length - 2]}`)
-            if (eventRecord[eventRecord.length - 2] === undefined) {
-                textbox.value = ""
-            }
-            else {
-                textbox.value = eventRecord[eventRecord.length - 2];
-            }
-            eventRecord.pop();
-            eventRecord.pop();
+            textbox.value = textbox.value.slice(0, textbox.value.length - 1);
             break;
         case 'Delete':
             button = document.getElementById('clear');
@@ -209,11 +199,13 @@ function keyPress(e) {
             //evaluate(textbox.value);
             calculate(textbox.value);
             break;
+        case 'u':
+            undoTextbox();
     }
     if (eventRecord[eventRecord.length - 1] != textbox.value) {
         eventRecord.push(textbox.value);
     }
-    //console.log(eventRecord);
+    console.log(eventRecord);
 
 }
 function tranisitionEnd(e) {
@@ -235,6 +227,8 @@ const operators = ['(', ')', '*', '/', '+', '-'];
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
+    console.log(`CALCULATING -------------- : ${string}`);
+
     const characterCounts = characterCount(string);
     string = string.replace(' ', '');
     if (characterCounts['('] === characterCounts[')']) {
@@ -266,8 +260,7 @@ function evaluateParentheses(string) {
     }
 }
 function evaluate(string) {
-    let n1, n2, subStrExprResult, subStr, subStrExpr, nextExpr, indexes;
-    console.log(`STARTING WITH STRING: ${string}`);
+    //console.log(`STARTING WITH STRING: ${string}`);
     //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)} and string.lastIndexOf(operations.Subtract): ${string.lastIndexOf(operations.Subtract)}`);
     //console.log(`HERE: string[0]: ${string[0]}, string[0] === '-'': ${string[0] === '-'}`);
     if (string.match(/[0-9]\.[0-9]*e/)) {
@@ -305,12 +298,11 @@ function evaluate(string) {
         return string;
     }
 }
-
 function getInnerMostExpression(string) {
     const subExprStart = string.indexOf('(');
     const subExprEnd = string.indexOf(')');
     if (string.slice(subExprStart, subExprEnd).includes('(')) {
-        console.log('need to find the innermost (');
+        //console.log('need to find the innermost (');
         for (let i = 1; i <= string.length - subExprEnd; i++) {
             const char = string[i];
             let subStr = string.slice(subExprStart + i, subExprEnd);
@@ -322,10 +314,9 @@ function getInnerMostExpression(string) {
         }
     }
     else {
-        console.log(`index: ${subExprStart} is the inner most (`);
+        return string;
     }
 }
-
 function getSubStrIndexes(indexOfOperator, string) {
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true;
@@ -351,17 +342,18 @@ function getSubStrIndexes(indexOfOperator, string) {
     //!right side of operator
     i = 1;
     matchFound = true;
+    let includeNegativeSign = true;
     while (matchFound) {
         nextCharIndex = indexOfOperator + i;
-        //console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         if (string[indexOfOperator] == '^') {
             if (string[indexOfOperator + 1] == '-') {
                 matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
-                //console.log(`1 and matchfound: ${matchFound}`);
+                console.log(`i: ${i} and matchfound: ${matchFound}`);
             }
             else {
                 matchFound = string[nextCharIndex].match(/[0-9. ]/i);
-                //console.log(`2 and matchfound: ${matchFound}`);
+                console.log(`2 and matchfound: ${matchFound}`);
             }
         }
         else {
@@ -379,7 +371,7 @@ function getSubStrIndexes(indexOfOperator, string) {
         }
     }
 
-    //todo this is a bandaind because I can't figure out how to get the left side of getSubStrIndexes while loop right.
+    // this is a band-aid because I can't figure out how to get the left side of getSubStrIndexes while loop right.
     let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
     if (!firstSubStrExprChar.match(/[0-9\-]/i)) {
         console.log(`need to remove ${firstSubStrExprChar} from string: ${string}`);
@@ -389,7 +381,6 @@ function getSubStrIndexes(indexOfOperator, string) {
     //console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
-
 function getNextExpr(string, indexOfOperator, operation) {
     const indexes = getSubStrIndexes(indexOfOperator, string);
     let subStrExpr = string.slice(indexes[0], indexes[1] + 1);
@@ -411,24 +402,31 @@ function getNextExpr(string, indexOfOperator, operation) {
     else if (operation === operations.Subtract) {
         subStrExprResult = subtract(n1, n2);
     }
-    //!adding a '-' to subexpressions that start with a negative sign but the result is positive
+    //!adding a '+' to subexpressions that start with a negative sign but the result is positive
     let condition = subStrExpr[0] == '-' && subStrExprResult[0] != '-';
     let condition2 = parseFloat(subStrExpr) < 0 && parseFloat(subStrExprResult) > 0;
     if (condition2) {
-        console.log(`ADDING '+' --- subStrExpr: ${subStrExpr} and subStrExprResult: ${subStrExprResult}`);
+        console.log(`ADDING INITIAL '+' --- subStrExpr: ${subStrExpr} and subStrExprResult: ${subStrExprResult}`);
         subStrExprResult = '+' + subStrExprResult;
     }
     //alert(1);
-    console.log(`subStrExpr: ${subStrExpr} of string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
     nextExpr = string.replace(subStrExpr, subStrExprResult);
-    //!removes the + sign if it is at the beginning of the nextExpr
-    if(nextExpr[0] == '-') {
-        nextExpr = nextExpr.slice(1);
-    }
+    //!removes initial '-' sign if it is at the beginning of the nextExpr and not part of another expression
+    //console.log(`nextExpr: ${nextExpr}`)
+    // if (nextExpr[0] == '-' && (nextExpr.slice(1).includes('-') || nextExpr.includes('+') || nextExpr.includes('*') || nextExpr.includes('/') || nextExpr.includes('^'))) {
+    //     console.log(`REMOVING INITIAL '-' --- nextExpr: ${nextExpr}`)
+    //     nextExpr = nextExpr.slice(1);
+    // }
+    console.log(`getNextExpr END ---- subStrExpr: ${subStrExpr} of string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
     return nextExpr;
 }
 //#endregion 
 //#region Helper Fn
+function undoTextbox(){
+    let nextIndex = eventRecord.length - 2;
+    textbox.value = (nextIndex > 0) ? eventRecord[nextIndex] : eventRecord[0];
+    eventRecord.pop(2);
+}
 function add(n1, n2) {
     return parseFloat(n1) + parseFloat(n2);
 }
@@ -466,35 +464,21 @@ function characterCount(string) {
 }
 //#endregion
 // module.exports = evaluate, getSubStrIndexes, getNextExpr;
-const tests = ['4+5', '7-5', '4*5', '4/2', '(5+4)/3','(5+4)*3', '3*5+6-5/4+3', '5−6*2^3−5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)',];
-const expected = ["9", "2", "20", "2", "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666",]
+const tests =    ['2^3','-2^3','2^-3','-2^-3',
+                "4^15+10","-4^15-10","-4^-15-10","-4^-15+10", 
+                '4+5', '7-5', '4*5', '4/2', 
+                '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '5-6*2^3-5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)','(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)'];
+const expected = ['8','-8','0.125','-0.125',
+                "1073741834","-1073741834","−10.000000001","9.999999999",
+                "9", "2", "20", "2", 
+                "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666",'-8.192333333333336'];
+let allPassed = true;
 for (let i = 0; i < tests.length; i++) {
-    alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${calculate(tests[i])} \nPassed: ${calculate(tests[i]) == expected[i]}`);
+    if (calculate(tests[i]) != expected[i]) {
+        alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${calculate(tests[i])} \nPassed: ${calculate(tests[i]) == expected[i]}`);
+        allPassed = false;
+    }
 }
-
-// it('simple parenthesis /', function () {
-//   expect(evaluate('(5+4)/3')).toEqual('3');
-// })
-// it('simple parenthesis *', function () {
-//   expect(evaluate('(5+4)*3')).toEqual('27');
-// })
-// it('advanced expr no parenthesis', function () {
-//   expect(evaluate('3*5+6-5/4+3')).toEqual('22.75');
-// })
-// it('advanced expr2 no parenthesis', function () {
-//   expect(evaluate('5−6×2^3−5×6')).toEqual('-73');
-// })
-// it('advanced expr3 no parenthesis', function () {
-//   expect(evaluate('3.5*5.6+6-5.1/4.4+3')).toEqual('27.440909091');
-// })
-
-// it('advanced expr parenthesis', function () {
-//   expect(evaluate('(3*5)+6-5/(7+3)')).toEqual('20.5');
-// })
-
-// it('advanced expr2 parenthesis', function () {
-//   expect(evaluate('(3-(4+6-5*2))+6-5.1/(4.2+3)')).toEqual('8.291666666666666');
-// })
-// });
-
-//todo add condition to insert - if the expr starts with - but the subexpr is positive
+if (allPassed) {
+    alert(`All ${tests.length} tests passed!`);
+}
