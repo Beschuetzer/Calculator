@@ -1,6 +1,7 @@
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
 //todo either remove 'e' button or figure out how to interpret it.
 //#region Initialization Stuff
+let iterations = 0;
 const operations = {
     Add: '+',
     Divide: '/',
@@ -352,8 +353,7 @@ function inputHandling(string) {
     }
     return [string, shouldContinue];
 }
-function hanldeE(n1, n2, n1Replace, n2Replace) {
-    console.log(`handling e with n1: ${n1} and n2: ${n2}`);
+function handleE(n1, n2, n1Replace, n2Replace) {
     let tempn1, tempn2;
     if (n1Replace) {
         tempn1 = n1.replace('e', '*10^');
@@ -418,7 +418,12 @@ function evaluateParentheses(string) {
 }
 function evaluate(string) {
     //console.log(`STARTING WITH STRING: ${string}`);
-    alert('evaluating');
+    //alert('evaluating');
+    iterations++;
+    if (iterations > 1000){
+        throw new Error('Too many Iterations');
+    }
+
     if (string[0] == '+') {
         string = string.slice(1);
     }
@@ -442,19 +447,22 @@ function evaluate(string) {
         return evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
     }
     else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
-        console.log(`skipping start with - result: ${string.trim()}`);
+        console.log(`FINISHED CALCULATING ---: ${string.trim()}`);
         return string;
     }
     else if (string.includes(operations.Subtract)) {
         let indexOfOperator = string.indexOf(operations.Subtract);
+        if (string.includes('e') && string.indexOf(operations.Subtract) != string.lastIndexOf(operations.Subtract)) {
+
+        }
         //todo figure out 452-3e-5 problem selecting 2nd - as operator
-        if (string.match(/-.+-/i)) {
+        if (string.match(/\-.+\-/i)) {
             indexOfOperator = string.lastIndexOf(operations.Subtract);
         }
         return evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
     }
     else {
-        console.log(`returning result: ${string.trim()}`);
+        console.log(`FINISHED CALCULATING ---: ${string.trim()}`);
         //alert(string);
         return string;
     }
@@ -489,7 +497,6 @@ function getInnerMostExpression(string) {
 function getSubStrIndexes(indexOfOperator, string) {
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true, operator = string[indexOfOperator];
-    console.log(`operator: ${operator} and indexOfOperator: ${indexOfOperator}`);
     //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex: ${string[nextCharIndex]}`)
     //!Left side of operator
     while (matchFound) {
@@ -533,17 +540,17 @@ function getSubStrIndexes(indexOfOperator, string) {
                 console.log(`i-2: ${i} and matchfound: ${matchFound}`);
             }
         }
-        // else if (operator == '*' || operator == '/') {
-        //     console.log(`matched * or /`);
-        //     // if (string[indexOfOperator + 1] == '-') {
-        //     //     console.log(1);
-        //     //     matchFound = string[nextCharIndex].match(/[0-9.\-e ]/i)
-        //     // }
-        //     // else {
-        //         console.log(`branch: 2`);
-        //         matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i)
-        //     // }
-        // }
+        else if (operator == '*' || operator == '/') {
+            console.log(`matched * or /`);
+            if (string[indexOfOperator + 1] == '-') {
+                console.log(1);
+                matchFound = string[nextCharIndex].match(/[0-9.\-e ]/i)
+            }
+            else {
+                console.log(`branch: 2`);
+                matchFound = string[nextCharIndex].match(/[0-9.e ]/i)
+            }
+        }
         else {
             console.log(`matched - or + or e`);
             matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i)
@@ -580,7 +587,8 @@ function getNextExpr(string, indexOfOperator, operation) {
     let n1Replace = n1.includes('e');
     let n2Replace = n2.includes('e');
     if (n1Replace || n2Replace) {
-        let newNumbers = hanldeE(n1, n2, n1Replace, n2Replace);
+        console.log(`OPERATION: ${operation} and indexOfOperator: ${indexOfOperator} ----- Handling e with n1: ${n1} and n2: ${n2}`);
+        let newNumbers = handleE(n1, n2, n1Replace, n2Replace);
         n1 = newNumbers[0];
         n2 = newNumbers[1];
     }
@@ -617,7 +625,7 @@ function getNextExpr(string, indexOfOperator, operation) {
     //     console.log(`REMOVING INITIAL '-' --- nextExpr: ${nextExpr}`)
     //     nextExpr = nextExpr.slice(1);
     // }
-    console.log(`SENDING TO CALCULATE ---- string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
+    console.log(`SENDING TO CALCULATE ---- string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}\nNEXT EXPRESSION ---- ${nextExpr}`);
     //console.log(`NEXT EXPRESSION ---- ${nextExpr}`);
     return nextExpr;
 }
@@ -631,7 +639,8 @@ function getNextExpr(string, indexOfOperator, operation) {
 //#region Testing
 const tests = [
     //"10e5", "1.4e-5",
-    "452/3e-5.4", "452-(3e-5)", "452/3e-5.4-2.1-6.3", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
+    // "452/3e-5.4", "452-(3e-5)", "452/3e-5.4-2.1-6.3", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
+    //"-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "(-9.313225746154785e-10)*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "9*&#2", "9*+-2", "9/+-2", "9-+*2", "9^+-2", "9e+-2",
     "9*^4", "9*/4", "9**4", "9*e4", "9*+4", "9*-4",
     "9/^4", "9/*4", "9//4", "9/e4", "9/+4", "9/-4",
@@ -640,7 +649,6 @@ const tests = [
     "9-*4", "9-/4", "9-+4", "9-e4", "9-^4", "(2.5-3.5)*-2--4",
     '5-6*2^3-5*6', "9(5-6)", "0*1", "0*-1", "0^-1", "0/-1", "0-1", "0+-1", "2^0", "-2^0",
     "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
-    "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "(-9.313225746154785e-10)*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "4^(1/4)+10", "-4^(3/4)-10", "-4^-(1/4)-10", "4^-(3/4)+10",
     "4^15+10", "-4^15-10", "-4^-15-10", "-4^-15+10",
     '2^3', '-2^3', '2^-3', '-2^-3',
@@ -650,7 +658,8 @@ const tests = [
 ];
 const expected = [
     // "1000000", ".000014";
-    "37845755.568077706", "451.99997", "37845747.16807771", "-44.19981657271387", "451.99997", "Imaginary",
+    // "37845755.568077706", "451.99997", "37845747.16807771", "-44.19981657271387", "451.99997", "Imaginary",
+    //`${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped",
     "Stopped", "Stopped", "Stopped", "Stopped", "36", "-36",
     "Stopped", "Stopped", "2.25", "Stopped", "2.25", "-2.25",
@@ -659,7 +668,6 @@ const expected = [
     "Stopped", "Stopped", "5", "Stopped", "Stopped", "6",
     "-73", "-9", "0", "0", "Infinity", "0", "-1", "-1", "1", "1",
     "-9.804236178711692", "6561", "Imaginary", "1.008594091576999", "28551",
-    `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "11.414213562373096", "Imaginary-10", "Imaginary-10", "10.353553390593273",
     "1073741834", "-1073741834", "-10.000000000931323", "9.999999999068677",
     '8', '-8', '0.125', '-0.125',
