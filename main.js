@@ -1,3 +1,5 @@
+    //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
+
 //#region Initialization Stuff
 const operations = {
     Add: '+',
@@ -231,10 +233,11 @@ function tranisitionEnd(e) {
 //#endregion
 //#region Helper Fn
 function operatorsPrint(operator) {
+
     if (operator == '.') {
         numbers = textbox.value.split(/[*\-+^/e()]/i);
-        alert(numbers);
-        if (!condition) {
+        //alert(numbers);
+        if (!numbers[numbers.length-1].includes('.')) {
             textbox.value += operator;
         }
     }
@@ -250,15 +253,12 @@ function undoTextbox() {
 function add(n1, n2) {
     return parseFloat(n1) + parseFloat(n2);
 }
-
 function subtract(n1, n2) {
     return n1 - n2;
 }
-
 function multiply(n1, n2) {
     return n1 * n2;
 }
-
 function divide(n1, n2) {
     if (n2 === 0) {
         alert(`Dividing by zero is against the rules!`);
@@ -266,14 +266,12 @@ function divide(n1, n2) {
     }
     return n1 / n2;
 }
-
 function exponentiate(n1, n2) {
     if (n1 < 0 && (n2 > 0 && n2 < 1 || n2 < 0 && n2 > -1)) {
         return "Imaginary";
     }
     return Math.pow(n1, n2);
 }
-
 function characterCount(string) {
     return Array.from(string).reduce((obj, c) => {
         //console.log(`obj: ${obj} and c: ${c} and obj[c]: ${obj[c]}`);
@@ -285,14 +283,61 @@ function characterCount(string) {
         return obj;
     }, {});
 }
-function formatStringToContinue(string) {
+function stopExecution(msg) {
+    textbox.value = msg;
+    //throw new Error(msg);
+}
+function inputHandling(string) {
+    //! Changing Input to Workable Form
+
+    let msg = `Illegal Operator Found`, shouldContinue = false;
+    if (string.match(/[\-\+*\/\^e]{3,}/)) {     //three operators in a row (don't even try to figure out)
+        stopExecution("Three Operators in a Row Found");
+        return ["", shouldContinue];
+    }
     string = string.replace(' ', '');
     string = string.replace(/([0-9])\(/i, '$1*\(');    //convert 9(n1-n2) to 9*(n1-n2)
     string = string.replace(/\+\-/i, '-');   //
     string = string.replace(/\-\+/i, '-');   //
     string = string.replace(/\+\+/i, '+');   //
     string = string.replace(/\-\-/i, '+');   //
-    return string;
+    string = string.replace(/\/\//i, '/');   //
+    let plusSignMatch = string.match(/[\^\/*\-\+][\+]/);
+    if (plusSignMatch) {
+        //console.log(`replacing: ${plusSignMatch}`);
+        //alert(`replacing: ${plusSignMatch} with ${plusSignMatch[0][0]}`);
+        string = string.replace(plusSignMatch, plusSignMatch[0][0]);
+    }
+    //console.log(`string after replaces: ${string}`);
+    //! Handling Unusable Input
+    if (string.match(/[^0-9e\-+*^\/\(\)\.]/i)) {       //catches invalid chars
+        stopExecution(msg);
+        //alert(1);
+    }
+    else if (string.match(/[+*]{2,}/i)) {               //'++', '+*', '*+', and '**'
+        if (string.includes('**')) {
+            msg = "Use '^' for exponentiation not '**'.";
+        }
+        stopExecution(msg);
+        //alert(2);
+    }
+    else if (string.match(/[\^\-\+\/][^0-9\(\)\-]/i)) {      //'-
+        stopExecution(msg);
+        //alert(3);
+    }
+    else if (string.match(/[*][^\-\+0-9\()]/i)) {
+        stopExecution(msg);
+        //alert(4);
+    }
+    else {
+        shouldContinue = true;
+        //alert(`Continuing`);
+    }
+    return [string, shouldContinue];
+}
+function getIndexOfOperatorWithE(string){
+    let indexOfNonOperator = 
+    alert(`GETTING E INDEXOFOPERATOR ---- string: ${string}`);
 }
 //#endregion
 //#region Main Logic
@@ -300,27 +345,29 @@ function formatStringToContinue(string) {
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
-    let msg;
+    //alert(`CALCULATING -------------- : ${string}`);
+    let msg, shouldContinue;
     const characterCounts = characterCount(string);
-    string = formatStringToContinue(string);
     console.log(`\nCALCULATING -------------- : ${string}`);
-    //alert(1);
-    if (string.match(/[^0-9e\-+*^/()\.]/i)) {
-        msg = `Illegal Character found`;
-        textbox.value = msg;
-        return msg;
+    const results = inputHandling(string);
+    string = results[0], shouldContinue = results[1];
+    console.log(`shouldContinue: ${shouldContinue} and NEW STRING: ${string}`);
+    if (shouldContinue) {
+        if (characterCounts['('] === characterCounts[')']) {
+            //console.log('parentheses match up');
+            parenthesesHandled = evaluateParentheses(string);
+            let result = evaluateParentheses(parenthesesHandled);
+            textbox.value = result;
+            return result;
+        } else {
+            //console.log('parentheses mismatch');
+            msg = "Error.  Parentheses Mismatch";
+            textbox.value = msg;
+            return msg;
+        }
     }
-    if (characterCounts['('] === characterCounts[')']) {
-        //console.log('parentheses match up');
-        parenthesesHandled = evaluateParentheses(string);
-        let result = evaluateParentheses(parenthesesHandled);
-        textbox.value = result;
-        return result;
-    } else {
-        //console.log('parentheses mismatch');
-        msg = "Error.  Parentheses Mismatch";
-        textbox.value = msg;
-        return msg;
+    else {
+        return "Stopped";
     }
 }
 function evaluateParentheses(string) {
@@ -370,7 +417,11 @@ function evaluate(string) {
     }
     else if (string.includes(operations.Subtract)) {
         let indexOfOperator = string.indexOf(operations.Subtract);
-        if (string.match(/-.+-/i)) {
+        let eMatch = string.match(/e-/i);
+        if (eMatch) {
+            indexOfOperator = getIndexOfOperatorWithE(string, eMatch);
+        }
+        else if (string.match(/-.+-/i)) {
             indexOfOperator = string.lastIndexOf(operations.Subtract);
         }
         return evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
@@ -536,7 +587,14 @@ function getNextExpr(string, indexOfOperator, operation) {
 //#endregion 
 //#region Testing
 const tests = [
-    "9-*4", "9+*4", "9/*4", "9^*4", "9-^4", "9-*4", "4--4",
+    "452-3e-5", "452*3e-5","452/3e-5","452^3e-5",
+
+    "9*&#2", "9*+-2", "9/+-2", "9-+*2", "9^+-2", "9e+-2",
+    "9*^4", "9*/4", "9**4", "9*e4", "9*+4", "9*-4",
+    "9/^4", "9/*4", "9//4", "9/e4", "9/+4", "9/-4",
+    "9^*4", "9^/4", "9^e4", "9^^4", "9^+4", "9^-4",
+    "9+*4", "9+/4", "9+^4", "9+e4", "9.5+-4", "(2.5+3.5)*2++4",
+    "9-*4", "9-/4", "9-+4", "9-e4", "9-^4", "(2.5-3.5)*-2--4",
     '5-6*2^3-5*6', "9(5-6)", "0*1", "0*-1", "0^-1", "0/-1", "0-1", "0+-1", "2^0", "-2^0",
     "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
     "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "-9.313225746154785e-10*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
@@ -547,7 +605,14 @@ const tests = [
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
 ];
 const expected = [
-    "9-*4", "9+*4", "9/*4", "9^*4", "9-^4", "9-*4", "4--4",
+    "Stopped", "Stopped", "Stopped", "Stopped", 
+
+    "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped",
+    "Stopped", "Stopped", "Stopped", "Stopped", "36", "-36",
+    "Stopped", "Stopped", "2.25", "Stopped", "2.25", "-2.25",
+    "Stopped", "Stopped", "Stopped", "Stopped", "6561", "0.00015241579027587258",
+    "Stopped", "Stopped", "Stopped", "Stopped", "5.5", "16",
+    "Stopped", "Stopped", "5", "Stopped", "Stopped", "6",
     "-73", "-9", "0", "0", "Infinity", "0", "-1", "-1", "1", "1",
     "-9.804236178711692", "6561", "Imaginary", "1.008594091576999", "28551",
     `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
@@ -557,7 +622,10 @@ const expected = [
     "9", "2", "20", "2",
     "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
 ];
-let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1;
+let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1, expectedLength = expected.length, testsLength = tests.length;
+if (expectedLength != testsLength) {
+    alert(`Expected size differs from tests\testsLength: ${testsLength} and expectedLength: ${expectedLength}`)
+}
 for (let i = 0; i < tests.length; i++) {
     // if (i >= pauseAtIteration && i < stopPauseAtIteration) {
     //     alert(`Starting Test for: ${tests[i]}`);
