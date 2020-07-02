@@ -17,9 +17,9 @@
     width: 100%;
     grid-template:       "tb tb tb tb tb tb"  3fr
                          "seven eight nine exponentiation undo clear" 1fr
-                         "four five six multiply left_parenthesis left_parenthesis" 1fr
-                         "one two three divide right_parenthesis right_parenthesis" 1fr
-                         "zero period subtract add equals equals" 1fr
+                         "four five six multiply left_parenthesis right_parenthesis" 1fr
+                         "one two three divide equals equals" 1fr
+                         "zero period subtract add e e" 1fr
                          / 1fr 1fr 1fr 1fr 1fr 1fr;
     justify-content: center;
     align-items: center;
@@ -149,4 +149,7 @@ button:hover{
 }
 .exponentiation{
     grid-area: exponentiation;
+}
+.e{
+    grid-area: e;
 }
