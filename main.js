@@ -82,7 +82,6 @@ function buttonPress(e) {
             textbox.value = '';
             break;
         case 'period':
-            //todo need to verify only one dot per number
             operatorsPrint('.');
             break;
         case 'equals':
@@ -207,7 +206,6 @@ function keyPress(e) {
         case '.':
             button = document.getElementById('period');
             button.classList.add('button_press');
-            //todo need to verify only one dot per number
             operatorsPrint('.');
             break;
         case 'Enter':
@@ -233,13 +231,11 @@ function tranisitionEnd(e) {
 //#endregion
 //#region Helper Fn
 function operatorsPrint(operator) {
-    //todo have to only allow one . per number
     if (operator == '.') {
         numbers = textbox.value.split(/[*\-+^/e()]/i);
         alert(numbers);
         if (!condition) {
             textbox.value += operator;
-            //!  only print '.' if it's the only one in number
         }
     }
     else if (textbox.value[textbox.value.length - 1] != operator) {
@@ -294,17 +290,19 @@ function characterCount(string) {
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
-    console.log(`CALCULATING -------------- : ${string}`);
     let msg;
     const characterCounts = characterCount(string);
     string = string.replace(' ', '');
-    //todo replace any string to handle 9(9-8) type expressions change it to 9*(9-8)
+    string = string.replace(/([0-9])\(/i, '$1*\(');
+    string = string.replace(/\+\-/i, '-');
+    console.log(`\nCALCULATING -------------- : ${string}`);
+    //alert(1);
+
     if (string.match(/[^0-9e\-+*^/()\.]/i)) {
         msg = `Illegal Character found`;
         textbox.value = msg;
         return msg;
     }
-    //alert(1);
 
     if (characterCounts['('] === characterCounts[')']) {
         //console.log('parentheses match up');
@@ -383,7 +381,6 @@ function getInnerMostExpression(string) {
     const subExprEnd = string.indexOf(')');
     if (string.slice(subExprStart, subExprEnd).includes('(')) {
         //console.log('need to find the innermost (');
-        //todo need to work on this when starting expr with (
         //(2.5-6*3.5/(5-2)^3)^-3-10
         console.log(`string: ${string}, string.length: ${string.length} - subExprEnd: ${subExprEnd}`)
         for (let i = 1; i <= string.length - subExprEnd + 2; i++) {
@@ -419,11 +416,11 @@ function getSubStrIndexes(indexOfOperator, string) {
         else {
             matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\-e ]/i);
         }
-        console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        //console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         startIndex = nextCharIndex;
         i++;
         if (i > indexOfOperator || (string[startIndex] == '-' && string[(startIndex - 1 >= 0) ? startIndex - 1 : startIndex] != 'e') || startIndex == 0) {
-            console.log('breaking left');
+            //console.log('breaking left');
             break;
         }
     }
@@ -433,7 +430,7 @@ function getSubStrIndexes(indexOfOperator, string) {
     let includeNegativeSign = true, negativeSignCount = 0;
     while (matchFound) {
         nextCharIndex = indexOfOperator + i;
-        console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        //console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
         if (string[indexOfOperator] == '^') {
             if (string[nextCharIndex] == '-') {
                 negativeSignCount++;
@@ -451,7 +448,17 @@ function getSubStrIndexes(indexOfOperator, string) {
                 //console.log(`i-2: ${i} and matchfound: ${matchFound}`);
             }
         }
+        else if (string[indexOfOperator] == '*' || string[indexOfOperator] == '/' ) {
+            console.log(`matched * or /`);
+            if(string[indexOfOperator + 1] == '-') {
+                matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
+            }
+            else {
+                matchFound = string[nextCharIndex].match(/[0-9. ]/i)
+            }
+        }
         else {
+            console.log(`matched - or + or e`);
             matchFound = string[nextCharIndex].match(/[0-9. ]/i)
         }
 
@@ -473,7 +480,7 @@ function getSubStrIndexes(indexOfOperator, string) {
         startIndex += 1;
     }
     // alert(5);
-    //console.log(`startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
+    console.log(`GETTING INDEXES END --- startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
 function getNextExpr(string, indexOfOperator, operation) {
@@ -516,28 +523,33 @@ function getNextExpr(string, indexOfOperator, operation) {
     //     console.log(`REMOVING INITIAL '-' --- nextExpr: ${nextExpr}`)
     //     nextExpr = nextExpr.slice(1);
     // }
-    console.log(`getNextExpr END ---- nextExpr: ${nextExpr}, subStrExpr: ${subStrExpr} of string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
+    console.log(`SENDING TO CALCULATE ---- string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
+    console.log(`NEXT EXPRESSION ---- ${nextExpr}`);
     return nextExpr;
 }
 //#endregion 
 //#region Testing
 const tests = [
-    "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
+    '5-6*2^3-5*6', 
+    "9(5-6)", "0*1", "0*-1","0^-1","0/-1","0-1","0+-1","2^0", "-2^0",
+     "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
     "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "-9.313225746154785e-10*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "4^(1/4)+10", "-4^(3/4)-10", "-4^-(1/4)-10", "4^-(3/4)+10",
     "4^15+10", "-4^15-10", "-4^-15-10", "-4^-15+10",
     '2^3', '-2^3', '2^-3', '-2^-3',
     '4+5', '7-5', '4*5', '4/2',
-    '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '5-6*2^3-5*6', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
+    '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
 ];
 const expected = [
+    "-73",
+    "-9","0","0","Infinity","0","-1","-1","1", "1",
     "-9.804236178711692", "6561", "Imaginary", "1.008594091576999", "28551",
     `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "11.414213562373096", "Imaginary-10", "Imaginary-10", "10.353553390593273",
     "1073741834", "-1073741834", "-10.000000000931323", "9.999999999068677",
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
-    "3", "27", "22.75", "-73", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
+    "3", "27", "22.75",  "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
 ];
 let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1;
 for (let i = 0; i < tests.length; i++) {
