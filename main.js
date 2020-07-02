@@ -1,5 +1,5 @@
-    //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
-
+//todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
+//todo either remove 'e' button or figure out how to interpret it.
 //#region Initialization Stuff
 const operations = {
     Add: '+',
@@ -21,7 +21,7 @@ for (const button of buttons) {
     button.addEventListener('transitionend', tranisitionEnd);
 }
 function buttonPress(e) {
-    //console.log(e);
+    console.log(e);
     switch (e.srcElement.id) {
         case 'left_parenthesis':
             textbox.value += '(';
@@ -75,6 +75,7 @@ function buttonPress(e) {
             operatorsPrint('-');
             break;
         case 'e':
+            alert('e');
             operatorsPrint('e');
             break;
         case 'undo':
@@ -237,7 +238,7 @@ function operatorsPrint(operator) {
     if (operator == '.') {
         numbers = textbox.value.split(/[*\-+^/e()]/i);
         //alert(numbers);
-        if (!numbers[numbers.length-1].includes('.')) {
+        if (!numbers[numbers.length - 1].includes('.')) {
             textbox.value += operator;
         }
     }
@@ -302,13 +303,21 @@ function inputHandling(string) {
     string = string.replace(/\+\+/i, '+');   //
     string = string.replace(/\-\-/i, '+');   //
     string = string.replace(/\/\//i, '/');   //
+
     let plusSignMatch = string.match(/[\^\/*\-\+][\+]/);
     if (plusSignMatch) {
         //console.log(`replacing: ${plusSignMatch}`);
         //alert(`replacing: ${plusSignMatch} with ${plusSignMatch[0][0]}`);
         string = string.replace(plusSignMatch, plusSignMatch[0][0]);
     }
-    //console.log(`string after replaces: ${string}`);
+
+    let eAndNegativeMatch = string.match(/e-/i);
+    if (eAndNegativeMatch) {
+        //console.log(`replacing: ${plusSignMatch}`);
+        //alert(`replacing: ${eAndNegativeMatch} with "10^-"`);
+        string = string.replaceAll(eAndNegativeMatch, "*10^-");
+    }
+    console.log(`string after replaces: ${string}`);
     //! Handling Unusable Input
     if (string.match(/[^0-9e\-+*^\/\(\)\.]/i)) {       //catches invalid chars
         stopExecution(msg);
@@ -334,10 +343,6 @@ function inputHandling(string) {
         //alert(`Continuing`);
     }
     return [string, shouldContinue];
-}
-function getIndexOfOperatorWithE(string){
-    let indexOfNonOperator = 
-    alert(`GETTING E INDEXOFOPERATOR ---- string: ${string}`);
 }
 //#endregion
 //#region Main Logic
@@ -395,9 +400,9 @@ function evaluate(string) {
     if (string[0] == '+') {
         string = string.slice(1);
     }
-    if (string.match(/^\s*\-*[0-9]\.[0-9]*e\-*\s*[0-9]*$/) || string.match(/Imaginary/i)) {
+    if (string.match(/^\s*\-*[0-9]\.*[0-9]*e\-*\s*[0-9]*$/) || string.match(/Imaginary/i)) {
         console.log(`STOPPING HERE --- with ${string}`);
-        return string;
+        return "Imaginary";
     }
     else if (string.includes(operations.Exponentiation)) {
         return evaluate(getNextExpr(string, string.lastIndexOf(operations.Exponentiation), operations.Exponentiation));
@@ -417,11 +422,7 @@ function evaluate(string) {
     }
     else if (string.includes(operations.Subtract)) {
         let indexOfOperator = string.indexOf(operations.Subtract);
-        let eMatch = string.match(/e-/i);
-        if (eMatch) {
-            indexOfOperator = getIndexOfOperatorWithE(string, eMatch);
-        }
-        else if (string.match(/-.+-/i)) {
+        if (string.match(/-.+-/i)) {
             indexOfOperator = string.lastIndexOf(operations.Subtract);
         }
         return evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
@@ -506,7 +507,7 @@ function getSubStrIndexes(indexOfOperator, string) {
             }
         }
         else if (string[indexOfOperator] == '*' || string[indexOfOperator] == '/') {
-            console.log(`matched * or /`);
+            //console.log(`matched * or /`);
             if (string[indexOfOperator + 1] == '-') {
                 matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
             }
@@ -515,7 +516,7 @@ function getSubStrIndexes(indexOfOperator, string) {
             }
         }
         else {
-            console.log(`matched - or + or e`);
+            //console.log(`matched - or + or e`);
             matchFound = string[nextCharIndex].match(/[0-9. ]/i)
         }
 
@@ -532,12 +533,12 @@ function getSubStrIndexes(indexOfOperator, string) {
 
     // this is a band-aid because I can't figure out how to get the left side of getSubStrIndexes while loop right.
     let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
-    console.log(`string: ${string}, startIndex: ${startIndex}, endIndex: ${startIndex}, and firstSubStrExprChar: ${firstSubStrExprChar}`);
+    //console.log(`string: ${string}, startIndex: ${startIndex}, endIndex: ${startIndex}, and firstSubStrExprChar: ${firstSubStrExprChar}`);
     if (!firstSubStrExprChar.match(/[0-9\-]/i)) {
         startIndex += 1;
     }
     // alert(5);
-    console.log(`GETTING INDEXES END --- startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
+    //console.log(`GETTING INDEXES END --- startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
     return [startIndex, endIndex];
 }
 function getNextExpr(string, indexOfOperator, operation) {
@@ -581,14 +582,14 @@ function getNextExpr(string, indexOfOperator, operation) {
     //     nextExpr = nextExpr.slice(1);
     // }
     console.log(`SENDING TO CALCULATE ---- string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
-    console.log(`NEXT EXPRESSION ---- ${nextExpr}`);
+    //console.log(`NEXT EXPRESSION ---- ${nextExpr}`);
     return nextExpr;
 }
 //#endregion 
 //#region Testing
 const tests = [
-    "452-3e-5", "452*3e-5","452/3e-5","452^3e-5",
-
+    //"10e5", "1.4e-5",
+    "452/3e-5.4", "452-3e-5", "452/3e-5.4-2.1-6.3", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
     "9*&#2", "9*+-2", "9/+-2", "9-+*2", "9^+-2", "9e+-2",
     "9*^4", "9*/4", "9**4", "9*e4", "9*+4", "9*-4",
     "9/^4", "9/*4", "9//4", "9/e4", "9/+4", "9/-4",
@@ -603,10 +604,11 @@ const tests = [
     '2^3', '-2^3', '2^-3', '-2^-3',
     '4+5', '7-5', '4*5', '4/2',
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
+    "452*3e-5-8",
 ];
 const expected = [
-    "Stopped", "Stopped", "Stopped", "Stopped", 
-
+    // "1000000", ".000014";
+    "37845755.568077706", "451.99997", "37845747.16807771", "-44.19981657271387", "451.99997", "Imaginary",
     "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped",
     "Stopped", "Stopped", "Stopped", "Stopped", "36", "-36",
     "Stopped", "Stopped", "2.25", "Stopped", "2.25", "-2.25",
@@ -621,23 +623,27 @@ const expected = [
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
     "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
+    "-8.399400185",
 ];
+let runTests = true;
 let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1, expectedLength = expected.length, testsLength = tests.length;
-if (expectedLength != testsLength) {
-    alert(`Expected size differs from tests\testsLength: ${testsLength} and expectedLength: ${expectedLength}`)
-}
-for (let i = 0; i < tests.length; i++) {
-    // if (i >= pauseAtIteration && i < stopPauseAtIteration) {
-    //     alert(`Starting Test for: ${tests[i]}`);
-    // }
-    let actual = calculate(tests[i]);
-    if (actual != expected[i]) {
-        alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${actual} \nPassed: ${actual == expected[i]}`);
-        allPassed = false;
+if (runTests) {
+    if (expectedLength != testsLength) {
+        alert(`Expected size differs from tests\testsLength: ${testsLength} and expectedLength: ${expectedLength}`)
     }
-}
-if (allPassed) {
-    alert(`All ${tests.length} tests passed!`);
+    for (let i = 0; i < tests.length; i++) {
+        // if (i >= pauseAtIteration && i < stopPauseAtIteration) {
+        //     alert(`Starting Test for: ${tests[i]}`);
+        // }
+        let actual = calculate(tests[i]);
+        if (actual != expected[i]) {
+            alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${actual} \nPassed: ${actual == expected[i]}`);
+            allPassed = false;
+        }
+    }
+    if (allPassed) {
+        alert(`All ${tests.length} tests passed!`);
+    }
 }
 //#endregion
 // module.exports = evaluate, getSubStrIndexes, getNextExpr;
