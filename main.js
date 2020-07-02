@@ -285,25 +285,31 @@ function characterCount(string) {
         return obj;
     }, {});
 }
+function formatStringToContinue(string) {
+    string = string.replace(' ', '');
+    string = string.replace(/([0-9])\(/i, '$1*\(');    //convert 9(n1-n2) to 9*(n1-n2)
+    string = string.replace(/\+\-/i, '-');   //
+    string = string.replace(/\-\+/i, '-');   //
+    string = string.replace(/\+\+/i, '+');   //
+    string = string.replace(/\-\-/i, '+');   //
+    return string;
+}
 //#endregion
 //#region Main Logic
+
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
     let msg;
     const characterCounts = characterCount(string);
-    string = string.replace(' ', '');
-    string = string.replace(/([0-9])\(/i, '$1*\(');
-    string = string.replace(/\+\-/i, '-');
+    string = formatStringToContinue(string);
     console.log(`\nCALCULATING -------------- : ${string}`);
     //alert(1);
-
     if (string.match(/[^0-9e\-+*^/()\.]/i)) {
         msg = `Illegal Character found`;
         textbox.value = msg;
         return msg;
     }
-
     if (characterCounts['('] === characterCounts[')']) {
         //console.log('parentheses match up');
         parenthesesHandled = evaluateParentheses(string);
@@ -448,9 +454,9 @@ function getSubStrIndexes(indexOfOperator, string) {
                 //console.log(`i-2: ${i} and matchfound: ${matchFound}`);
             }
         }
-        else if (string[indexOfOperator] == '*' || string[indexOfOperator] == '/' ) {
+        else if (string[indexOfOperator] == '*' || string[indexOfOperator] == '/') {
             console.log(`matched * or /`);
-            if(string[indexOfOperator + 1] == '-') {
+            if (string[indexOfOperator + 1] == '-') {
                 matchFound = string[nextCharIndex].match(/[0-9.\- ]/i)
             }
             else {
@@ -530,9 +536,9 @@ function getNextExpr(string, indexOfOperator, operation) {
 //#endregion 
 //#region Testing
 const tests = [
-    '5-6*2^3-5*6', 
-    "9(5-6)", "0*1", "0*-1","0^-1","0/-1","0-1","0+-1","2^0", "-2^0",
-     "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
+    "9-*4", "9+*4", "9/*4", "9^*4", "9-^4", "9-*4", "4--4",
+    '5-6*2^3-5*6', "9(5-6)", "0*1", "0*-1", "0^-1", "0/-1", "0-1", "0+-1", "2^0", "-2^0",
+    "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
     "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "-9.313225746154785e-10*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "4^(1/4)+10", "-4^(3/4)-10", "-4^-(1/4)-10", "4^-(3/4)+10",
     "4^15+10", "-4^15-10", "-4^-15-10", "-4^-15+10",
@@ -541,15 +547,15 @@ const tests = [
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
 ];
 const expected = [
-    "-73",
-    "-9","0","0","Infinity","0","-1","-1","1", "1",
+    "9-*4", "9+*4", "9/*4", "9^*4", "9-^4", "9-*4", "4--4",
+    "-73", "-9", "0", "0", "Infinity", "0", "-1", "-1", "1", "1",
     "-9.804236178711692", "6561", "Imaginary", "1.008594091576999", "28551",
     `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "11.414213562373096", "Imaginary-10", "Imaginary-10", "10.353553390593273",
     "1073741834", "-1073741834", "-10.000000000931323", "9.999999999068677",
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
-    "3", "27", "22.75",  "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
+    "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
 ];
 let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1;
 for (let i = 0; i < tests.length; i++) {
