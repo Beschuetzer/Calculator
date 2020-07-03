@@ -10,16 +10,11 @@
 // z5 = z.times(z).round(10)               // "0.4444444445"
 // alert(`${z}, ${z2}, ${z3}, ${z4}, ${z5}`);
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
-<<<<<<< HEAD
-//todo either remove 'e' button or figure out how to interpret it.
-=======
+
 //todo change when clicking button it expands like keypress
 //todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
 // 
-<<<<<<< HEAD
->>>>>>> 4430609... Tried to add big.js library to project to solve decimal exponent issue
-=======
->>>>>>> 4430609... Tried to add big.js library to project to solve decimal exponent issue
+
 //#region Initialization Stuff
 const operations = {
     Add: '+',
