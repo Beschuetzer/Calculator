@@ -10,12 +10,13 @@
 // z5 = z.times(z).round(10)               // "0.4444444445"
 // alert(`${z}, ${z2}, ${z3}, ${z4}, ${z5}`);
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
-
 //todo change when clicking button it expands like keypress
 //todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
-// 
 
 //#region Initialization Stuff
+let iterations = 0;
+const maxIterations = 425;
+
 const operations = {
     Add: '+',
     Divide: '/',
@@ -37,9 +38,9 @@ for (const button of buttons) {
     button.addEventListener('transitionend', tranisitionEnd);
 }
 function buttonPress(e) {
-    console.log(e);
+    //console.log(e);
     switch (e.srcElement.id) {
-        case 'left_parenthesis':
+        case 'left_parenthesis':            
             textbox.value += '(';
             break;
         case 'right_parenthesis':
@@ -111,6 +112,9 @@ function buttonPress(e) {
             calculate(textbox.value);
             break;
     }
+    console.log(`sourceID: ${e.srcElement.id}`);
+    button = document.getElementById(e.srcElement.id);
+    button.classList.add('button_press');
     if (eventRecord[eventRecord.length - 1] != textbox.value) {
         eventRecord.push(textbox.value);
     }
@@ -367,8 +371,7 @@ function inputHandling(string) {
     }
     return [string, shouldContinue];
 }
-function hanldeE(n1, n2, n1Replace, n2Replace) {
-    console.log(`handling e with n1: ${n1} and n2: ${n2}`);
+function handleE(n1, n2, n1Replace, n2Replace) {
     let tempn1, tempn2;
     if (n1Replace) {
         tempn1 = n1.replace('e', '*10^');
@@ -383,7 +386,6 @@ function hanldeE(n1, n2, n1Replace, n2Replace) {
 }
 //#endregion
 //#region Main Logic
-
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
@@ -400,6 +402,7 @@ function calculate(string) {
             parenthesesHandled = evaluateParentheses(string);
             let result = evaluateParentheses(parenthesesHandled);
             textbox.value = result;
+            console.log(`Iterations needed: ${iterations}`);
             return result;
         } else {
             //console.log('parentheses mismatch');
@@ -420,9 +423,9 @@ function evaluateParentheses(string) {
     else {
         const subStr = getInnerMostExpression(string);
         const subStrExpr = subStr.slice(1, subStr.length - 1);
-        console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
         const nextExpr = string.replace(subStr, evaluate(subStrExpr));
-        console.log(`nextExpr: ${nextExpr}`);
+        //console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
+        console.log(`NEXTEXPR in EVALUATE PARAENTHESES: ${nextExpr}`);
         //alert(5);
         if (nextExpr.includes('(')) {
             return evaluateParentheses(nextExpr);
@@ -433,12 +436,25 @@ function evaluateParentheses(string) {
 }
 function evaluate(string) {
     //console.log(`STARTING WITH STRING: ${string}`);
-    alert('evaluating');
+    //alert('evaluating');
+    let minusMatches = string.match(/\-/ig);
+    let minusCount = minusMatches != null ? minusMatches.length : 0;
+    iterations++;
+    // console.log(`string[string.indexOf('e')]): ${string[string.indexOf('e')]}`)
+    // console.log(`string[string.indexOf('e') + 1] == '-'): ${string[string.indexOf('e') + 1] == '-'}`)
+    // console.log(`(string.indexOf('e')): ${string.indexOf('e')}`);
+    // console.log(`(string.indexOf('e')) ? string[string.indexOf('e') + 1] == '-' : false: ${(string.indexOf('e') != -1) ? string[string.indexOf('e') + 1] == '-' : false}`)
+    //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)}`)
+    //console.log(` string.lastIndexOf(operations.Subtract): ${ string.lastIndexOf(operations.Subtract)}`)
+    if (iterations > maxIterations) {
+        throw new Error('Too many Iterations');
+    }
+
     if (string[0] == '+') {
         string = string.slice(1);
     }
     if (string.match(/^\s*\-*[0-9]\.*[0-9]*e\-*\s*[0-9]*$/) || string.match(/Imaginary/i)) {
-        console.log(`STOPPING HERE --- with ${string}`);
+        console.log(`STOPPING HERE-- - with ${string} `);
         let msg = "Imaginary";
         textbox.value = string;
         return string;
@@ -456,23 +472,56 @@ function evaluate(string) {
     else if (string.includes(operations.Add)) {
         return evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
     }
-    else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
-        console.log(`skipping start with - result: ${string.trim()}`);
+    //todo need to modify to consider case of more than two -
+    else if (minusCount <= 2 && string[0] === '-' && (string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract) || (string.indexOf('e') != -1) ? string[string.indexOf('e') + 1] == '-' : false)) {
+        console.log(`FINISHED CALCULATING DUE TO E-- - : ${string.trim()} `);
         return string;
     }
     else if (string.includes(operations.Subtract)) {
-        let indexOfOperator = string.indexOf(operations.Subtract);
-        //todo figure out 452-3e-5 problem selecting 2nd - as operator
-        if (string.match(/-.+-/i)) {
-            indexOfOperator = string.lastIndexOf(operations.Subtract);
-        }
+        let indexOfOperator = getIndexForSubtract(string);
         return evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
     }
     else {
-        console.log(`returning result: ${string.trim()}`);
+        console.log(`FINISHED CALCULATING-- -: ${string.trim()} `);
         //alert(string);
         return string;
     }
+}
+function getIndexForSubtract(string) {
+    let indexOfOperator = string.indexOf(operations.Subtract);
+    if (string.includes('e') && string.indexOf(operations.Subtract) != string.lastIndexOf(operations.Subtract)) {
+        let possibleIndexes = new Set();
+        let invalidIndexes = new Set();
+        invalidIndexes.add(0);
+        //!Populating possibleIndexes
+        const regex = /\-/ig;
+        while ((result = regex.exec(string))) {
+            possibleIndexes.add(result.index);
+        }
+
+        //!Populating invalidIndexes
+        for (let i = 0; i < string.length; i++) {
+            const char = string[i];
+            if (char == 'e' & string[i + 1] == '-') {
+                invalidIndexes.add(i + 1);
+            }
+        }
+        //todo get the difference between the two arrays...
+        let intersect = new Set([...possibleIndexes].filter(i => !invalidIndexes.has(i)));
+        const intersectValues = intersect.values();
+        indexOfOperator = intersectValues.next().value;
+        //alert(`index: ${ indexOfOperator }, possible: ${ possibleIndexes } and invalid: ${ invalidIndexes } \ndifference: ${ intersect } `);
+    }
+    else if (string.match(/\-.+\-/i)) {
+        indexOfOperator = string.lastIndexOf(operations.Subtract);
+    }
+    // for (let item of possibleIndexes) {
+    //     alert(`string: ${ string }, possible '-' at index: ${ item }, typeof ${ typeof item } `);
+    // }
+    // for (let item of invalidIndexes) {
+    //     alert(`string: ${ string }, invalid '-' at index: ${ item }, typeof ${ typeof item } `);
+    // }
+    return indexOfOperator;
 }
 function getInnerMostExpression(string) {
     let innerExpr = "";
@@ -480,44 +529,51 @@ function getInnerMostExpression(string) {
     const subExprEnd = string.indexOf(')');
     if (string.slice(subExprStart, subExprEnd).includes('(')) {
         //console.log('need to find the innermost (');
-        //(2.5-6*3.5/(5-2)^3)^-3-10
-        console.log(`string: ${string}, string.length: ${string.length} - subExprEnd: ${subExprEnd}`)
-        for (let i = 1; i <= string.length - subExprEnd + 2; i++) {
+        // 6.89e-5+8.744e-8*3500009.33/(2^3-(6/3+(4/2^3+3.5)))
+        console.log(`starting index: ${subExprStart}, string: ${string}, string.length: ${string.length}, and subExprEnd: ${subExprEnd} `)
+        for (let i = 1; i <= subExprEnd - subExprStart -1; i++) {
             const char = string[i];
             let subStr = string.slice(subExprStart + i, subExprEnd);
-            console.log(`char: ${char} and subStr ${subStr}`)
+            console.log(`char: ${char} and subStr ${subStr} `)
             if (!subStr.includes('(')) {
                 innerExpr = string.slice(subExprStart + i - 1, subExprEnd + 1);
-                console.log(`RETURNING INNER EXPRESSION --- ${innerExpr}`);
+                console.log(`RETURNING INNER EXPRESSION-- - ${innerExpr} `);
                 return innerExpr;
             }
+            console.log(`i: ${i} and end condition: ${string.length - subExprEnd + 2}`);
         }
     }
     else {
         innerExpr = string.slice(subExprStart + i - 1, subExprEnd + 1);
-        console.log(`RETURNING INNER EXPRESSION --- ${innerExpr}`);
+        console.log(`RETURNING INNER EXPRESSION-- - ${innerExpr} `);
         return innerExpr;
     }
-    console.log(`RETURNING --- ${string}`);
+    console.log(`RETURNING-- - ${string} `);
     return string;
 }
 function getSubStrIndexes(indexOfOperator, string) {
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true, operator = string[indexOfOperator];
-    console.log(`operator: ${operator} and indexOfOperator: ${indexOfOperator}`);
-    //console.log(`starting: string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex: ${string[nextCharIndex]}`)
+    //console.log(`starting: string: ${ string } and indexOfOperator: ${ indexOfOperator }, i: ${ i }, and string[nextCharIndex: ${ string[nextCharIndex] } `)
     //!Left side of operator
     while (matchFound) {
         nextCharIndex = indexOfOperator - i;
-        if (operator == '-') {
-            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\-e ]/i);
+        // if (operator == '-') {
+        //     matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9\.\-e ]/i);
+        // }
+        // else {
+        if (i == 1) {
+            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9\) ]/i);
 
         }
         else {
-            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9.\-e ]/i);
+            matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9\.\-e ]/i);
         }
-        //console.log(`left --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
-        startIndex = nextCharIndex;
+        // }
+        if (matchFound) {
+            startIndex = nextCharIndex;
+        }
+        //console.log(`left-- - STARTINDEX: ${ startIndex }, string: ${ string } and indexOfOperator: ${ indexOfOperator }, i: ${ i }, and string[nextCharIndex]: ${ string[nextCharIndex] } `)
         i++;
         if (i > indexOfOperator || (string[startIndex] == '-' && string[(startIndex - 1 >= 0) ? startIndex - 1 : startIndex] != 'e') || startIndex == 0) {
             //console.log('breaking left');
@@ -527,78 +583,125 @@ function getSubStrIndexes(indexOfOperator, string) {
     //!right side of operator
     i = 1;
     matchFound = true;
-    let includeNegativeSign = true, negativeSignCount = 0;
+    let includeNegativeSign = false, negativeSignCount = 0;
     while (matchFound) {
         nextCharIndex = indexOfOperator + i;
-        //console.log(`right --- string: ${string} and indexOfOperator: ${indexOfOperator}, i: ${i}, and string[nextCharIndex]: ${string[nextCharIndex]}`)
+        //console.log(`right-- - string: ${ string } and indexOfOperator: ${ indexOfOperator }, i: ${ i }, and string[nextCharIndex]: ${ string[nextCharIndex] } `)
         if (operator == '^') {
             if (string[nextCharIndex] == '-') {
                 negativeSignCount++;
-                //console.log(`negCount: ${negativeSignCount}`);
-                if (negativeSignCount > 1) {
+                includeNegativeSign = true;
+                //console.log(`negCount: ${ negativeSignCount } `);
+            }
+            //452^3e-5-10   and 
+            if (includeNegativeSign) {
+                if (string[nextCharIndex + 1].match(/[0-9]/i) && string[indexOfOperator + 1] != '-' && string[nextCharIndex - 1] != 'e') {
+                    //console.log(`breaking for negative`);
                     break;
                 }
+                matchFound = string[nextCharIndex].match(/[0-9.\-\( ]/i);
+                includeNegativeSign = false;
+                //console.log(`i - 1: ${i} and matchfound: ${matchFound} `);
+
             }
-            if (string[indexOfOperator + 1] == '-') {
-                matchFound = string[nextCharIndex].match(/[0-9.\-e ]/i)
-                console.log(`i-1: ${i} and matchfound: ${matchFound}`);
+            else if (string[nextCharIndex] == 'e') {
+                includeNegativeSign = true;
+                matchFound = string[nextCharIndex].match(/[0-9.e\( ]/i);
+                //console.log(`i - 2: ${i} and matchfound: ${matchFound} `);
+
             }
+            // else if (string[nextCharIndex + 1] == '-') {
+            //     matchFound = string[nextCharIndex].match(/[0-9.\( ]/i);
+            //     console.log(`i - 3: ${ i } and matchfound: ${ matchFound } `);
+            // }
             else {
-                matchFound = string[nextCharIndex].match(/[0-9.e ]/i);
-                console.log(`i-2: ${i} and matchfound: ${matchFound}`);
+                matchFound = string[nextCharIndex].match(/[0-9.\( ]/i);
+                //console.log(`i - 3: ${i} and matchfound: ${matchFound} `);
             }
         }
-        // else if (operator == '*' || operator == '/') {
-        //     console.log(`matched * or /`);
-        //     // if (string[indexOfOperator + 1] == '-') {
-        //     //     console.log(1);
-        //     //     matchFound = string[nextCharIndex].match(/[0-9.\-e ]/i)
-        //     // }
-        //     // else {
-        //         console.log(`branch: 2`);
-        //         matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i)
-        //     // }
-        // }
-        else {
-            console.log(`matched - or + or e`);
-            matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i)
+        else if (operator == '*' || operator == '/') {
+            //console.log(`matched * or / `);
+            if (string[nextCharIndex] == 'e' && string[nextCharIndex + 1] == '-') {
+                includeNegativeSign = true;
+            }
+
+            if (string[indexOfOperator + 1] == '-') {
+                //console.log(`branch 1`);
+                if (true) {
+                    //todo have to exclude - if e isn't present to the right
+                }
+                matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i);
+            }
+
+            else {
+                //console.log(`branch: 2`);
+                if (includeNegativeSign) {
+                    //todo figure out how to inclue '...1e-5' case and exclude ...1-5
+                    matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i);
+                    if (string[nextCharIndex] == '-') {
+                        includeNegativeSign = false;
+                    }
+                    //console.log(`branch: 2 - 1\nstring[nextCharIndex]: ${string[nextCharIndex]} \n matchFound: ${matchFound} `);
+                    //alert(`branch: 2 - 1\nstring[nextCharIndex]: ${ string[nextCharIndex] } \n matchFound: ${ matchFound } `);
+                }
+                else {
+                    matchFound = string[nextCharIndex].match(/[0-9.e ]/i);
+                }
+            }
+        }
+        else if (operator == '+' || operator == '-') {
+            //console.log(`matched - or + or e`);
+            if (includeNegativeSign) {
+                matchFound = string[nextCharIndex].match(/[0-9.\-\(\ ]/i);
+                includeNegativeSign = false;
+            }
+            else if (string[nextCharIndex] == 'e') {
+                includeNegativeSign = true;
+            }
+            else {
+                matchFound = string[nextCharIndex].match(/[0-9.e\( ]/i);
+            }
+
         }
 
         if (matchFound && negativeSignCount <= 1) {
-            console.log(`matchfound: ${matchFound} and endIndex: ${endIndex}`)
             endIndex = nextCharIndex;
+            //console.log(`SAVING ENDINDEX --- matchfound: ${matchFound} and endIndex: ${endIndex} `)
         }
+        // else {
+        //     console.log('breaking right');
+        //     break;
+        // }
         i++;
-        if (i > string.length - indexOfOperator - 1) {
-            console.log('breaking right');
+        if (i > string.length - indexOfOperator - 1 || negativeSignCount > 1) {
+            //console.log('breaking right');
             break;
         }
     }
 
     // this is a band-aid because I can't figure out how to get the left side of getSubStrIndexes while loop right.
-    let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
-    //console.log(`string: ${string}, startIndex: ${startIndex}, endIndex: ${startIndex}, and firstSubStrExprChar: ${firstSubStrExprChar}`);
-    if (!firstSubStrExprChar.match(/[0-9\-]/i)) {
-        startIndex += 1;
-    }
-    // alert(5);
-    //console.log(`GETTING INDEXES END --- startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator}`)
+    // let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
+    // console.log(firstSubStrExprChar)
+    // if (!firstSubStrExprChar.match(/[\.0-9\-]/i) && firstSubStrExprChar) {
+    //     startIndex += 1;
+    // }
+    //console.log(`GETTING INDEXES END-- - match ${matchFound}, startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator} `)
+    //console.log(`string: ${ string }, startIndex: ${ startIndex }, endIndex: ${ endIndex }, and firstSubStrExprChar: ${ firstSubStrExprChar } `);
     return [startIndex, endIndex];
 }
 function getNextExpr(string, indexOfOperator, operation) {
     const indexes = getSubStrIndexes(indexOfOperator, string);
     let subStrExpr = string.slice(indexes[0], indexes[1] + 1), subStrExprResult;
-
-    //let , priorToSubStrExpr = (indexes[0] > 0) ? string.slice[0, indexes[0]] : "";
     let n1 = string.slice(indexes[0], indexOfOperator);
     let n2 = string.slice(indexOfOperator + 1, indexes[1] + 1);
     let n1Replace = n1.includes('e');
     let n2Replace = n2.includes('e');
-    if (n1Replace || n2Replace) {
-        let newNumbers = hanldeE(n1, n2, n1Replace, n2Replace);
-        n1 = newNumbers[0];
-        n2 = newNumbers[1];
-    }
+    // if (n1Replace || n2Replace) {
+    //     console.log(`OPERATION: ${ operation } and indexOfOperator: ${ indexOfOperator } ----- Handling e with n1: ${ n1 } and n2: ${ n2 } `);
+    //     let newNumbers = handleE(n1, n2, n1Replace, n2Replace);
+    //     n1 = newNumbers[0];
+    //     n2 = newNumbers[1];
+    // }
 
     if (operation === operations.Exponentiation) {
         subStrExprResult = exponentiate(n1, n2);
@@ -618,7 +721,7 @@ function getNextExpr(string, indexOfOperator, operation) {
     //!adding a '+' to subexpressions that start with a negative sign but the result is positive
     let condition1 = operation == '+' || operation == "-", condition2 = parseFloat(subStrExpr) < 0 && parseFloat(subStrExprResult) > 0;
     if (condition1 && condition2) {
-        console.log(`ADDING INITIAL '+' --- subStrExpr: ${subStrExpr} and subStrExprResult: ${subStrExprResult}`);
+        console.log(`ADDING INITIAL '+' -- - subStrExpr: ${subStrExpr} and subStrExprResult: ${subStrExprResult} `);
         subStrExprResult = '+' + subStrExprResult;
     }
 
@@ -627,26 +730,28 @@ function getNextExpr(string, indexOfOperator, operation) {
     nextExpr.replace('^+', '^');
 
     //!removes initial '-' sign if it is at the beginning of the nextExpr and not part of another expression
-    //console.log(`nextExpr: ${nextExpr}`)
+    //console.log(`nextExpr: ${ nextExpr } `)
     // if (nextExpr[0] == '-' && (nextExpr.slice(1).includes('-') || nextExpr.includes('+') || nextExpr.includes('*') || nextExpr.includes('/') || nextExpr.includes('^'))) {
-    //     console.log(`REMOVING INITIAL '-' --- nextExpr: ${nextExpr}`)
+    //     console.log(`REMOVING INITIAL '-' -- - nextExpr: ${ nextExpr } `)
     //     nextExpr = nextExpr.slice(1);
     // }
-    console.log(`SENDING TO CALCULATE ---- string: ${string}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult}`);
-    //console.log(`NEXT EXPRESSION ---- ${nextExpr}`);
+    console.log(`SENDING TO CALCULATE----string: ${string}, operation: ${operation}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult} \nNEXT EXPRESSION----${nextExpr} `);
+    //console.log(`NEXT EXPRESSION----${ nextExpr } `);
     return nextExpr;
 }
-// alert(`exponentiate: ${exponentiate("452","3e-5.4")}`);
-// alert(`multiply: ${multiply("452","3e-5.4")}`);
-// alert(`divide: ${divide("452","3e-5.4")}`);
-// alert(`add: ${add("452","3e-5.4")}`);
-// alert(`subtract: ${subtract("452","3e-5.4")}`);
+// alert(getIndexForSubtract("-4.52e-5/3e-5.4-10"))
+// alert(getIndexForSubtract("-4.52e-5-10/3e-5.4-4.52e-5/3e-5.4"))
+//alert(`exponentiate: ${exponentiate("452", "3e-5.4")} `);
+// alert(`multiply: ${ multiply("452", "3e-5.4") } `);
+// alert(`divide: ${ divide("452", "3e-5.4") } `);
+// alert(`add: ${ add("452", "3e-5.4") } `);
+// alert(`subtract: ${ subtract("452", "3e-5.4") } `);
 
 //#endregion 
 //#region Testing
 const tests = [
-    //"10e5", "1.4e-5",
-    "452/3e-5.4", "452-(3e-5)", "452/3e-5.4-2.1-6.3", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
+    "10e5", "1.4e-5",
+    "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "(-9.313225746154785e-10)*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "9*&#2", "9*+-2", "9/+-2", "9-+*2", "9^+-2", "9e+-2",
     "9*^4", "9*/4", "9**4", "9*e4", "9*+4", "9*-4",
     "9/^4", "9/*4", "9//4", "9/e4", "9/+4", "9/-4",
@@ -655,17 +760,18 @@ const tests = [
     "9-*4", "9-/4", "9-+4", "9-e4", "9-^4", "(2.5-3.5)*-2--4",
     '5-6*2^3-5*6', "9(5-6)", "0*1", "0*-1", "0^-1", "0/-1", "0-1", "0+-1", "2^0", "-2^0",
     "(2.5-6*3.5/(5-2)^3)^-3-10", "3^2^3", "-2^-3^-4", "2^-3^-4", "(5-6*3)^4-10",
-    "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "(-9.313225746154785e-10)*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "4^(1/4)+10", "-4^(3/4)-10", "-4^-(1/4)-10", "4^-(3/4)+10",
     "4^15+10", "-4^15-10", "-4^-15-10", "-4^-15+10",
     '2^3', '-2^3', '2^-3', '-2^-3',
     '4+5', '7-5', '4*5', '4/2',
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
-    "452*3e-5-8",
+    "452-(3e-5)", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
+    "452*3e-5-8", ".013560000000000001-8", "6.89e-5+8.744e-8*(3.5e6+9.33)/(2^3-(6/3+((4/2^3+3.5)*6/(3^2-3)-5e-10+(1/5e10))))",
+    // "4.52e-5/3e-5.4", "452/3e-5.4-2.1-6.3",
 ];
 const expected = [
-    // "1000000", ".000014";
-    "37845755.568077706", "451.99997", "37845747.16807771", "-44.19981657271387", "451.99997", "Imaginary",
+    "10e5", "1.4e-5",
+    `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped",
     "Stopped", "Stopped", "Stopped", "Stopped", "36", "-36",
     "Stopped", "Stopped", "2.25", "Stopped", "2.25", "-2.25",
@@ -674,27 +780,28 @@ const expected = [
     "Stopped", "Stopped", "5", "Stopped", "Stopped", "6",
     "-73", "-9", "0", "0", "Infinity", "0", "-1", "-1", "1", "1",
     "-9.804236178711692", "6561", "Imaginary", "1.008594091576999", "28551",
-    `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "11.414213562373096", "Imaginary-10", "Imaginary-10", "10.353553390593273",
     "1073741834", "-1073741834", "-10.000000000931323", "9.999999999068677",
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
     "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
-    "-8.399400185",
+    "451.99997", "-44.19981657271387", "451.99997", "-44.200092895430714",
+    "-7.98644", "-7.98644", "0.1530893078708751",
+    // "3.784575557", "37845747.16807771",
 ];
 let runTests = 1;
 let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1, expectedLength = expected.length, testsLength = tests.length;
 if (runTests) {
     if (expectedLength != testsLength) {
-        alert(`Expected size differs from tests\testsLength: ${testsLength} and expectedLength: ${expectedLength}`)
+        alert(`Expected size differs from tests\testsLength: ${testsLength} and expectedLength: ${expectedLength} `)
     }
     for (let i = 0; i < tests.length; i++) {
         // if (i >= pauseAtIteration && i < stopPauseAtIteration) {
-        //     alert(`Starting Test for: ${tests[i]}`);
+        //     alert(`Starting Test for: ${ tests[i] } `);
         // }
         let actual = calculate(tests[i]);
         if (actual != expected[i]) {
-            alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${actual} \nPassed: ${actual == expected[i]}\ntestsLength: ${testsLength}`);
+            alert(`Expr: ${tests[i]}, expected: ${expected[i]}, and result: ${actual} \nPassed: ${actual == expected[i]} \ntestsLength: ${testsLength} at test: ${i} `);
             allPassed = false;
         }
     }
