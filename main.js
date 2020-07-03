@@ -1,5 +1,7 @@
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
 //todo either remove 'e' button or figure out how to interpret it.
+//todo change when clicking button it expands like keypress
+//todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
 //#region Initialization Stuff
 let iterations = 0;
 const maxIterations = 275;
