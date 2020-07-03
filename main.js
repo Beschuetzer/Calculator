@@ -1,10 +1,9 @@
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
-//todo either remove 'e' button or figure out how to interpret it.
 //todo change when clicking button it expands like keypress
 //todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
 //#region Initialization Stuff
 let iterations = 0;
-const maxIterations = 325;
+const maxIterations = 425;
 
 const operations = {
     Add: '+',
@@ -27,9 +26,9 @@ for (const button of buttons) {
     button.addEventListener('transitionend', tranisitionEnd);
 }
 function buttonPress(e) {
-    console.log(e);
+    //console.log(e);
     switch (e.srcElement.id) {
-        case 'left_parenthesis':
+        case 'left_parenthesis':            
             textbox.value += '(';
             break;
         case 'right_parenthesis':
@@ -101,6 +100,9 @@ function buttonPress(e) {
             calculate(textbox.value);
             break;
     }
+    console.log(`sourceID: ${e.srcElement.id}`);
+    button = document.getElementById(e.srcElement.id);
+    button.classList.add('button_press');
     if (eventRecord[eventRecord.length - 1] != textbox.value) {
         eventRecord.push(textbox.value);
     }
@@ -372,7 +374,6 @@ function handleE(n1, n2, n1Replace, n2Replace) {
 }
 //#endregion
 //#region Main Logic
-
 function calculate(string) {
     //this evaluates the users input;  the function called directly.  
     //must not contain alpha chars
@@ -389,6 +390,7 @@ function calculate(string) {
             parenthesesHandled = evaluateParentheses(string);
             let result = evaluateParentheses(parenthesesHandled);
             textbox.value = result;
+            console.log(`Iterations needed: ${iterations}`);
             return result;
         } else {
             //console.log('parentheses mismatch');
@@ -409,9 +411,9 @@ function evaluateParentheses(string) {
     else {
         const subStr = getInnerMostExpression(string);
         const subStrExpr = subStr.slice(1, subStr.length - 1);
-        console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
         const nextExpr = string.replace(subStr, evaluate(subStrExpr));
-        console.log(`nextExpr: ${nextExpr}`);
+        //console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
+        console.log(`NEXTEXPR in EVALUATE PARAENTHESES: ${nextExpr}`);
         //alert(5);
         if (nextExpr.includes('(')) {
             return evaluateParentheses(nextExpr);
@@ -515,9 +517,9 @@ function getInnerMostExpression(string) {
     const subExprEnd = string.indexOf(')');
     if (string.slice(subExprStart, subExprEnd).includes('(')) {
         //console.log('need to find the innermost (');
-        //(2.5-6*3.5/(5-2)^3)^-3-10
-        console.log(`string: ${string}, string.length: ${string.length} - subExprEnd: ${subExprEnd} `)
-        for (let i = 1; i <= string.length - subExprEnd + 2; i++) {
+        // 6.89e-5+8.744e-8*3500009.33/(2^3-(6/3+(4/2^3+3.5)))
+        console.log(`starting index: ${subExprStart}, string: ${string}, string.length: ${string.length}, and subExprEnd: ${subExprEnd} `)
+        for (let i = 1; i <= subExprEnd - subExprStart -1; i++) {
             const char = string[i];
             let subStr = string.slice(subExprStart + i, subExprEnd);
             console.log(`char: ${char} and subStr ${subStr} `)
@@ -526,6 +528,7 @@ function getInnerMostExpression(string) {
                 console.log(`RETURNING INNER EXPRESSION-- - ${innerExpr} `);
                 return innerExpr;
             }
+            console.log(`i: ${i} and end condition: ${string.length - subExprEnd + 2}`);
         }
     }
     else {
@@ -581,18 +584,18 @@ function getSubStrIndexes(indexOfOperator, string) {
             //452^3e-5-10   and 
             if (includeNegativeSign) {
                 if (string[nextCharIndex + 1].match(/[0-9]/i) && string[indexOfOperator + 1] != '-' && string[nextCharIndex - 1] != 'e') {
-                    console.log(`breaking for negative`);
+                    //console.log(`breaking for negative`);
                     break;
                 }
                 matchFound = string[nextCharIndex].match(/[0-9.\-\( ]/i);
                 includeNegativeSign = false;
-                console.log(`i - 1: ${i} and matchfound: ${matchFound} `);
+                //console.log(`i - 1: ${i} and matchfound: ${matchFound} `);
 
             }
             else if (string[nextCharIndex] == 'e') {
                 includeNegativeSign = true;
                 matchFound = string[nextCharIndex].match(/[0-9.e\( ]/i);
-                console.log(`i - 2: ${i} and matchfound: ${matchFound} `);
+                //console.log(`i - 2: ${i} and matchfound: ${matchFound} `);
 
             }
             // else if (string[nextCharIndex + 1] == '-') {
@@ -601,17 +604,17 @@ function getSubStrIndexes(indexOfOperator, string) {
             // }
             else {
                 matchFound = string[nextCharIndex].match(/[0-9.\( ]/i);
-                console.log(`i - 3: ${i} and matchfound: ${matchFound} `);
+                //console.log(`i - 3: ${i} and matchfound: ${matchFound} `);
             }
         }
         else if (operator == '*' || operator == '/') {
-            console.log(`matched * or / `);
+            //console.log(`matched * or / `);
             if (string[nextCharIndex] == 'e' && string[nextCharIndex + 1] == '-') {
                 includeNegativeSign = true;
             }
 
             if (string[indexOfOperator + 1] == '-') {
-                console.log(`branch 1`);
+                //console.log(`branch 1`);
                 if (true) {
                     //todo have to exclude - if e isn't present to the right
                 }
@@ -619,14 +622,14 @@ function getSubStrIndexes(indexOfOperator, string) {
             }
 
             else {
-                console.log(`branch: 2`);
+                //console.log(`branch: 2`);
                 if (includeNegativeSign) {
                     //todo figure out how to inclue '...1e-5' case and exclude ...1-5
                     matchFound = string[nextCharIndex].match(/[0-9.e\- ]/i);
                     if (string[nextCharIndex] == '-') {
                         includeNegativeSign = false;
                     }
-                    console.log(`branch: 2 - 1\nstring[nextCharIndex]: ${string[nextCharIndex]} \n matchFound: ${matchFound} `);
+                    //console.log(`branch: 2 - 1\nstring[nextCharIndex]: ${string[nextCharIndex]} \n matchFound: ${matchFound} `);
                     //alert(`branch: 2 - 1\nstring[nextCharIndex]: ${ string[nextCharIndex] } \n matchFound: ${ matchFound } `);
                 }
                 else {
@@ -635,7 +638,7 @@ function getSubStrIndexes(indexOfOperator, string) {
             }
         }
         else if (operator == '+' || operator == '-') {
-            console.log(`matched - or + or e`);
+            //console.log(`matched - or + or e`);
             if (includeNegativeSign) {
                 matchFound = string[nextCharIndex].match(/[0-9.\-\(\ ]/i);
                 includeNegativeSign = false;
@@ -651,7 +654,7 @@ function getSubStrIndexes(indexOfOperator, string) {
 
         if (matchFound && negativeSignCount <= 1) {
             endIndex = nextCharIndex;
-            console.log(`SAVING ENDINDEX --- matchfound: ${matchFound} and endIndex: ${endIndex} `)
+            //console.log(`SAVING ENDINDEX --- matchfound: ${matchFound} and endIndex: ${endIndex} `)
         }
         // else {
         //     console.log('breaking right');
@@ -659,7 +662,7 @@ function getSubStrIndexes(indexOfOperator, string) {
         // }
         i++;
         if (i > string.length - indexOfOperator - 1 || negativeSignCount > 1) {
-            console.log('breaking right');
+            //console.log('breaking right');
             break;
         }
     }
@@ -670,7 +673,7 @@ function getSubStrIndexes(indexOfOperator, string) {
     // if (!firstSubStrExprChar.match(/[\.0-9\-]/i) && firstSubStrExprChar) {
     //     startIndex += 1;
     // }
-    console.log(`GETTING INDEXES END-- - match ${matchFound}, startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator} `)
+    //console.log(`GETTING INDEXES END-- - match ${matchFound}, startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator} `)
     //console.log(`string: ${ string }, startIndex: ${ startIndex }, endIndex: ${ endIndex }, and firstSubStrExprChar: ${ firstSubStrExprChar } `);
     return [startIndex, endIndex];
 }
@@ -726,7 +729,7 @@ function getNextExpr(string, indexOfOperator, operation) {
 }
 // alert(getIndexForSubtract("-4.52e-5/3e-5.4-10"))
 // alert(getIndexForSubtract("-4.52e-5-10/3e-5.4-4.52e-5/3e-5.4"))
-// alert(`exponentiate: ${ exponentiate("452", "3e-5.4") } `);
+//alert(`exponentiate: ${exponentiate("452", "3e-5.4")} `);
 // alert(`multiply: ${ multiply("452", "3e-5.4") } `);
 // alert(`divide: ${ divide("452", "3e-5.4") } `);
 // alert(`add: ${ add("452", "3e-5.4") } `);
@@ -751,12 +754,12 @@ const tests = [
     '4+5', '7-5', '4*5', '4/2',
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
     "452-(3e-5)", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
-    "452*3e-5-8", ".013560000000000001-8",
+    "452*3e-5-8", ".013560000000000001-8", "6.89e-5+8.744e-8*(3.5e6+9.33)/(2^3-(6/3+((4/2^3+3.5)*6/(3^2-3)-5e-10+(1/5e10))))",
     // "4.52e-5/3e-5.4", "452/3e-5.4-2.1-6.3",
 ];
 const expected = [
     "10e5", "1.4e-5",
-    `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${ multiply("-9.313225746154785e-10", "4") }`, `${ divide("-9.313225746154785e-10", "4") }`, `${ exponentiate("-9.313225746154785e-10", "4") }`, "-100",
+    `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped",
     "Stopped", "Stopped", "Stopped", "Stopped", "36", "-36",
     "Stopped", "Stopped", "2.25", "Stopped", "2.25", "-2.25",
@@ -771,7 +774,7 @@ const expected = [
     "9", "2", "20", "2",
     "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
     "451.99997", "-44.19981657271387", "451.99997", "-44.200092895430714",
-    "-7.98644", "-7.98644",
+    "-7.98644", "-7.98644", "0.1530893078708751",
     // "3.784575557", "37845747.16807771",
 ];
 let runTests = 1;
