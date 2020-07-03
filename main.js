@@ -16,6 +16,9 @@
 //todo change when clicking button it expands like keypress
 //todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
 // 
+<<<<<<< HEAD
+>>>>>>> 4430609... Tried to add big.js library to project to solve decimal exponent issue
+=======
 >>>>>>> 4430609... Tried to add big.js library to project to solve decimal exponent issue
 //#region Initialization Stuff
 const operations = {
