@@ -423,6 +423,8 @@ function evaluateParentheses(string) {
 function evaluate(string) {
     //console.log(`STARTING WITH STRING: ${string}`);
     //alert('evaluating');
+    let minusMatches = string.match(/\-/ig);
+    let minusCount = minusMatches != null ? minusMatches.length : 0;
     iterations++;
     if (iterations > maxIterations) {
         throw new Error('Too many Iterations');
@@ -450,19 +452,13 @@ function evaluate(string) {
     else if (string.includes(operations.Add)) {
         return evaluate(getNextExpr(string, string.indexOf(operations.Add), operations.Add));
     }
-    else if (string[0] === '-' && string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract)) {
-        console.log(`FINISHED CALCULATING ---: ${string.trim()}`);
+    //todo need to modify to consider case of more than two -
+    else if (minusCount == 2 && string[0] === '-' && (string.indexOf(operations.Subtract) == string.lastIndexOf(operations.Subtract) || string[string.indexOf('e') + 1] == '-')) {
+        console.log(`FINISHED CALCULATING DUE TO E--- : ${string.trim()}`);
         return string;
     }
     else if (string.includes(operations.Subtract)) {
-        let indexOfOperator = string.indexOf(operations.Subtract);
-        if (string.includes('e') && string.indexOf(operations.Subtract) != string.lastIndexOf(operations.Subtract)) {
-            alert(10);
-        }
-        //todo figure out 452-3e-5 problem selecting 2nd - as operator
-        if (string.match(/\-.+\-/i)) {
-            indexOfOperator = string.lastIndexOf(operations.Subtract);
-        }
+        let indexOfOperator = getIndexForSubtract(string);
         return evaluate(getNextExpr(string, indexOfOperator, operations.Subtract));
     }
     else {
@@ -470,6 +466,42 @@ function evaluate(string) {
         //alert(string);
         return string;
     }
+}
+function getIndexForSubtract(string) {
+    let indexOfOperator = string.indexOf(operations.Subtract);
+    if (string.includes('e') && string.indexOf(operations.Subtract) != string.lastIndexOf(operations.Subtract)) {
+        let possibleIndexes = new Set();
+        let invalidIndexes = new Set();
+        invalidIndexes.add(0);
+        //!Populating possibleIndexes
+        const regex = /\-/ig;
+        while ((result = regex.exec(string))) {
+            possibleIndexes.add(result.index);
+        }
+
+        //!Populating invalidIndexes
+        for (let i = 0; i < string.length; i++) {
+            const char = string[i];
+            if (char == 'e' & string[i + 1] == '-') {
+                invalidIndexes.add(i + 1);
+            }
+        }
+        //todo get the difference between the two arrays...
+        let intersect = new Set([...possibleIndexes].filter(i => !invalidIndexes.has(i)));
+        const intersectValues = intersect.values();
+        indexOfOperator = intersectValues.next().value;
+        //alert(`index: ${indexOfOperator}, possible: ${possibleIndexes} and invalid: ${invalidIndexes}\ndifference: ${intersect}`);
+    }
+    else if (string.match(/\-.+\-/i)) {
+        indexOfOperator = string.lastIndexOf(operations.Subtract);
+    }
+    // for (let item of possibleIndexes) {
+    //     alert(`string: ${string}, possible '-' at index: ${item}, typeof ${typeof item}`);
+    // }
+    // for (let item of invalidIndexes) {
+    //     alert(`string: ${string}, invalid '-' at index: ${item}, typeof ${typeof item}`);
+    // }
+    return indexOfOperator;
 }
 function getInnerMostExpression(string) {
     let innerExpr = "";
@@ -663,6 +695,8 @@ function getNextExpr(string, indexOfOperator, operation) {
     //console.log(`NEXT EXPRESSION ---- ${nextExpr}`);
     return nextExpr;
 }
+// alert(getIndexForSubtract("-4.52e-5/3e-5.4-10"))
+// alert(getIndexForSubtract("-4.52e-5-10/3e-5.4-4.52e-5/3e-5.4"))
 // alert(`exponentiate: ${exponentiate("452","3e-5.4")}`);
 // alert(`multiply: ${multiply("452","3e-5.4")}`);
 // alert(`divide: ${divide("452","3e-5.4")}`);
@@ -688,7 +722,7 @@ const tests = [
     '2^3', '-2^3', '2^-3', '-2^-3',
     '4+5', '7-5', '4*5', '4/2',
     '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
-    "452*3e-5-8", ".013560000000000001-8", "452/3e-5.4",
+    "452*3e-5-8", ".013560000000000001-8", "4.52e-5/3e-5.4",
 ];
 const expected = [
     "10e5", "1.4e-5",
@@ -707,7 +741,7 @@ const expected = [
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
     "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
-    "-7.98644", "-7.98644", "37845755.568077706",
+    "-7.98644", "-7.98644", "3.784575557",
 ];
 let runTests = 1;
 let allPassed = true, pauseAtIteration = 5, stopPauseAtIteration = 9, i = 1, expectedLength = expected.length, testsLength = tests.length;
