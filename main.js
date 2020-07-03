@@ -1,6 +1,18 @@
+// import Big from '../big.js/big.js';
+
+// big = new Big();
+// x = new Big(2);
+// y = new Big(3);
+// z = x.div(y)                       // "0.6666666667"
+// z2 = z.sqrt()                           // "0.8164965809"
+// z3 = z.pow(-3)                          // "3.3749999995"
+// z4 = z.times(z)                         // "0.44444444448888888889"
+// z5 = z.times(z).round(10)               // "0.4444444445"
+// alert(`${z}, ${z2}, ${z3}, ${z4}, ${z5}`);
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
 //todo change when clicking button it expands like keypress
 //todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
+// 
 //#region Initialization Stuff
 let iterations = 0;
 const maxIterations = 425;
