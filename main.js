@@ -7,6 +7,13 @@
 // z4 = z.times(z)                         // "0.44444444448888888889"
 // z5 = z.times(z).round(10)               // "0.4444444445"
 // alert(`${z}, ${z2}, ${z3}, ${z4}, ${z5}`);
+// alert(getIndexForSubtract("-4.52e-5/3e-5.4-10"))
+// alert(getIndexForSubtract("-4.52e-5-10/3e-5.4-4.52e-5/3e-5.4"))
+//alert(`exponentiate: ${exponentiate("452", "3e-5.4")} `);
+// alert(`multiply: ${ multiply("452", "3e-5.4") } `);
+// alert(`divide: ${ divide("452", "3e-5.4") } `);
+// alert(`add: ${ add("452", "3e-5.4") } `);
+// alert(`subtract: ${ subtract("452", "3e-5.4") } `);//#endregion 
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
 //todo bug that trigger undo when pressing 'enter'
 //todo change when clicking button it expands like keypress
@@ -317,6 +324,7 @@ function inputHandling(string) {
     }
     string = string.replace(' ', '');
     string = string.replace(/([0-9])\(/i, '$1*\(');    //convert 9(n1-n2) to 9*(n1-n2)
+    string = string.replace(/\)([0-9])/i, '\)*$1');    //convert (n1-n2)9 to (n1-n2)*9
     string = string.replace(/\+\-/i, '-');   //
     string = string.replace(/\-\+/i, '-');   //
     string = string.replace(/\+\+/i, '+');   //
@@ -516,7 +524,7 @@ function getInnerMostExpression(string) {
     console.log(`RETURNING-- - ${string} `);
     return string;
 }
-function getSubStrIndexes(indexOfOperator, string) {
+function getSubStrIndexes(indexOfOperator, string) {    
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true, operator = string[indexOfOperator];
     //!Left side of operator
@@ -665,13 +673,7 @@ function getNextExpr(string, indexOfOperator, operation) {
     console.log(`SENDING TO CALCULATE----string: ${string}, operation: ${operation}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult} \nNEXT EXPRESSION----${nextExpr} `);
     return nextExpr;
 }
-// alert(getIndexForSubtract("-4.52e-5/3e-5.4-10"))
-// alert(getIndexForSubtract("-4.52e-5-10/3e-5.4-4.52e-5/3e-5.4"))
-//alert(`exponentiate: ${exponentiate("452", "3e-5.4")} `);
-// alert(`multiply: ${ multiply("452", "3e-5.4") } `);
-// alert(`divide: ${ divide("452", "3e-5.4") } `);
-// alert(`add: ${ add("452", "3e-5.4") } `);
-// alert(`subtract: ${ subtract("452", "3e-5.4") } `);//#endregion 
+//#endregion
 //#region Testing
 const tests = [
     "10e5", "1.4e-5", "5^32",
@@ -688,7 +690,7 @@ const tests = [
     "4^15+10", "-4^15-10", "-4^-15-10", "-4^-15+10",
     '2^3', '-2^3', '2^-3', '-2^-3',
     '4+5', '7-5', '4*5', '4/2',
-    '(5+4)/3', '(5+4)*3', '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)',
+    '(5+4)/3', '(5+4)*3',"(5+4)3","3(5+4)", '3*5+6-5/4+3', '3.5*5.6+6-5.1/4.4+3', '(3*5)+6-5/(7+3)', '(3-(4+6-5*2))+6-5.1/(4.2+3)', '(3-(4+(6.25-5^-3)*2))+6-5.1/(4.2+3)', 
     "452-(3e-5)", "43-66-22.2--452^(3e-5)", "452-3*10^-5", "43-66-22.2--452e-4^(3e-5)",
     "452*3e-5-8", ".013560000000000001-8", "6.89e-5+8.744e-8*(3.5e6+9.33)/(2^3-(6/3+((4/2^3+3.5)*6/(3^2-3)-5e-10+(1/5e10))))",
     // "4.52e-5/3e-5.4", "452/3e-5.4-2.1-6.3",
@@ -708,7 +710,7 @@ const expected = [
     "1073741834", "-1073741834", "-10.000000000931323", "9.999999999068677",
     '8', '-8', '0.125', '-0.125',
     "9", "2", "20", "2",
-    "3", "27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
+    "3", "27", "27","27", "22.75", "27.440909090909088", "20.5", "8.291666666666666", '-8.192333333333336',
     "451.99997", "-44.19981657271387", "451.99997", "-44.200092895430714",
     "-7.98644", "-7.98644", "0.1530893078708751",
     // "3.784575557", "37845747.16807771",
