@@ -1,0 +1,180 @@
+:root {
+  --textbox_text_size: 120px;
+  --font_size_buttons: 7vmin;
+}
+
+* {
+  padding: 0px;
+  margin: 0px;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+.body {
+  height: 100vh;
+  width: 100vw;
+}
+
+.full-page {
+  display: -ms-grid;
+  display: grid;
+  height: 100%;
+  width: 100%;
+  grid-template: "tb tb tb tb tb tb"  3fr "seven eight nine exponentiation undo clear" 1fr "four five six multiply left_parenthesis right_parenthesis" 1fr "one two three divide equals equals" 1fr "zero period subtract add e e" 1fr / 1fr 1fr 1fr 1fr 1fr 1fr;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.full-page div {
+  width: 100%;
+  height: 100%;
+  -ms-grid-column-align: center;
+      justify-self: center;
+  -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
+      align-self: center;
+}
+
+button {
+  font-size: var(--font_size_buttons);
+  width: 100%;
+  height: 100%;
+  color: white;
+  background: -webkit-gradient(linear, left bottom, left top, color-stop(50%, white), color-stop(50%, rgba(0, 0, 0, 0.9)));
+  background: linear-gradient(to top, white 50%, rgba(0, 0, 0, 0.9) 50%);
+  border: 1px solid white;
+  background-size: 200% 200%;
+  background-position: top;
+  -webkit-transition: all .25s ease;
+  transition: all .25s ease;
+}
+
+button:hover {
+  cursor: pointer;
+  background-position: bottom;
+  color: black;
+  border: 1px solid white;
+}
+
+.button_press {
+  color: black;
+  font-size: calc(var(--font_size_buttons)*1.25);
+  border: 1px solid white;
+}
+
+.operators {
+  background: -webkit-gradient(linear, left bottom, left top, color-stop(50%, white), color-stop(50%, rgba(0, 0, 0, 0.8)));
+  background: linear-gradient(to top, white 50%, rgba(0, 0, 0, 0.8) 50%);
+  background-size: 200% 200%;
+}
+
+.right_side {
+  background: -webkit-gradient(linear, left bottom, left top, color-stop(50%, white), color-stop(50%, rgba(0, 0, 0, 0.7)));
+  background: linear-gradient(to top, white 50%, rgba(0, 0, 0, 0.7) 50%);
+  background-size: 200% 200%;
+}
+
+.textarea {
+  grid-area: tb;
+  color: white;
+  background-color: rgba(0, 0, 0, 0.999);
+  height: 100%;
+  width: 100%;
+  font-size: var(--textbox_text_size);
+  text-align: center;
+  word-wrap: break-word;
+  word-wrap: normal;
+}
+
+.nine {
+  grid-area: nine;
+}
+
+.eight {
+  grid-area: eight;
+}
+
+.seven {
+  grid-area: seven;
+}
+
+.six {
+  grid-area: six;
+}
+
+.five {
+  grid-area: five;
+}
+
+.four {
+  grid-area: four;
+}
+
+.three {
+  grid-area: three;
+}
+
+.two {
+  grid-area: two;
+}
+
+.one {
+  grid-area: one;
+}
+
+.zero {
+  grid-area: zero;
+}
+
+.period {
+  grid-area: period;
+}
+
+.multiply {
+  grid-area: multiply;
+}
+
+.divide {
+  grid-area: divide;
+}
+
+.subtract {
+  grid-area: subtract;
+}
+
+.add {
+  grid-area: add;
+}
+
+.equals {
+  grid-area: equals;
+}
+
+.undo {
+  grid-area: undo;
+}
+
+.clear {
+  grid-area: clear;
+}
+
+.right_parenthesis {
+  grid-area: right_parenthesis;
+}
+
+.left_parenthesis {
+  grid-area: left_parenthesis;
+}
+
+.exponentiation {
+  grid-area: exponentiation;
+}
+
+.e {
+  grid-area: e;
+}
+/*# sourceMappingURL=main.css.map */

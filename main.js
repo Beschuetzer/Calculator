@@ -1,6 +1,4 @@
-// import Big from '../big.js/big.js';
-
-// big = new Big();
+// import Big from '../big.js/big.js';// big = new Big();
 // x = new Big(2);
 // y = new Big(3);
 // z = x.div(y)                       // "0.6666666667"
@@ -10,6 +8,7 @@
 // z5 = z.times(z).round(10)               // "0.4444444445"
 // alert(`${z}, ${z2}, ${z3}, ${z4}, ${z5}`);
 //todo fix bug 2 inputs one key press by focus change event listener on textbox and global variable?
+//todo bug that trigger undo when pressing 'enter'
 //todo change when clicking button it expands like keypress
 //todo add fn in evaluate of calculate to see if expr has 'e-' and then return the proper indexOfOperator value
 
@@ -40,7 +39,7 @@ for (const button of buttons) {
 function buttonPress(e) {
     //console.log(e);
     switch (e.srcElement.id) {
-        case 'left_parenthesis':            
+        case 'left_parenthesis':
             textbox.value += '(';
             break;
         case 'right_parenthesis':
@@ -224,7 +223,6 @@ function keyPress(e) {
             operatorsPrint('-');
             break;
         case 'Backspace':
-            // textbox.value = Array.from(textbox.value).slice(0, textbox.value.length - 1).join('');
             textbox.value = textbox.value.slice(0, textbox.value.length - 1);
             break;
         case 'Delete':
@@ -240,7 +238,6 @@ function keyPress(e) {
         case 'Enter':
             button = document.getElementById('equals');
             button.classList.add('button_press');
-            //evaluate(textbox.value);
             calculate(textbox.value);
             break;
         case 'u':
@@ -254,7 +251,6 @@ function keyPress(e) {
     console.log(eventRecord);
 }
 function tranisitionEnd(e) {
-    //console.log(e.target.classList);
     e.target.classList.remove('button_press');
 }
 //#endregion
@@ -263,7 +259,6 @@ function operatorsPrint(operator) {
 
     if (operator == '.') {
         numbers = textbox.value.split(/[*\-+^/e()]/i);
-        //alert(numbers);
         if (!numbers[numbers.length - 1].includes('.')) {
             textbox.value += operator;
         }
@@ -301,9 +296,7 @@ function exponentiate(n1, n2) {
 }
 function characterCount(string) {
     return Array.from(string).reduce((obj, c) => {
-        //console.log(`obj: ${obj} and c: ${c} and obj[c]: ${obj[c]}`);
         if (!(c in obj)) {
-            //console.log(`adding: ${c}: 0`)
             obj[c] = 0;
         }
         obj[c]++;
@@ -336,13 +329,6 @@ function inputHandling(string) {
         //alert(`replacing: ${plusSignMatch} with ${plusSignMatch[0][0]}`);
         string = string.replace(plusSignMatch, plusSignMatch[0][0]);
     }
-
-    // let eAndNegativeMatch = string.match(/e-/i);
-    // if (eAndNegativeMatch) {
-    //     //console.log(`replacing: ${plusSignMatch}`);
-    //     //alert(`replacing: ${eAndNegativeMatch} with "10^-"`);
-    //     string = string.replaceAll(eAndNegativeMatch, "*10^-");
-    // }
 
     console.log(`string after replaces: ${string}`);
     //! Handling Unusable Input
@@ -398,14 +384,12 @@ function calculate(string) {
     console.log(`shouldContinue: ${shouldContinue} and NEW STRING: ${string}`);
     if (shouldContinue) {
         if (characterCounts['('] === characterCounts[')']) {
-            //console.log('parentheses match up');
             parenthesesHandled = evaluateParentheses(string);
             let result = evaluateParentheses(parenthesesHandled);
             textbox.value = result;
             console.log(`Iterations needed: ${iterations}`);
             return result;
         } else {
-            //console.log('parentheses mismatch');
             msg = "Error.  Parentheses Mismatch";
             textbox.value = msg;
             return msg;
@@ -424,9 +408,7 @@ function evaluateParentheses(string) {
         const subStr = getInnerMostExpression(string);
         const subStrExpr = subStr.slice(1, subStr.length - 1);
         const nextExpr = string.replace(subStr, evaluate(subStrExpr));
-        //console.log(`subStr: ${subStr} of string: ${string}, subStrExpr: ${subStrExpr}`);
         console.log(`NEXTEXPR in EVALUATE PARAENTHESES: ${nextExpr}`);
-        //alert(5);
         if (nextExpr.includes('(')) {
             return evaluateParentheses(nextExpr);
         } else {
@@ -435,17 +417,10 @@ function evaluateParentheses(string) {
     }
 }
 function evaluate(string) {
-    //console.log(`STARTING WITH STRING: ${string}`);
     //alert('evaluating');
     let minusMatches = string.match(/\-/ig);
     let minusCount = minusMatches != null ? minusMatches.length : 0;
     iterations++;
-    // console.log(`string[string.indexOf('e')]): ${string[string.indexOf('e')]}`)
-    // console.log(`string[string.indexOf('e') + 1] == '-'): ${string[string.indexOf('e') + 1] == '-'}`)
-    // console.log(`(string.indexOf('e')): ${string.indexOf('e')}`);
-    // console.log(`(string.indexOf('e')) ? string[string.indexOf('e') + 1] == '-' : false: ${(string.indexOf('e') != -1) ? string[string.indexOf('e') + 1] == '-' : false}`)
-    //console.log(`string.indexOf(operations.Subtract): ${string.indexOf(operations.Subtract)}`)
-    //console.log(` string.lastIndexOf(operations.Subtract): ${ string.lastIndexOf(operations.Subtract)}`)
     if (iterations > maxIterations) {
         throw new Error('Too many Iterations');
     }
@@ -453,12 +428,11 @@ function evaluate(string) {
     if (string[0] == '+') {
         string = string.slice(1);
     }
-    if (string.match(/^\s*\-*[0-9]\.*[0-9]*e\-*\s*[0-9]*$/) || string.match(/Imaginary/i)) {
+    if (string.match(/^\s*\-*[0-9]\.*[0-9]*e[\-+]*\s*[0-9]*$/) || string.match(/Imaginary/i)) {
         console.log(`STOPPING HERE-- - with ${string} `);
         let msg = "Imaginary";
         textbox.value = string;
         return string;
-        //throw new Error('Stopping Prematurely');
     }
     else if (string.includes(operations.Exponentiation)) {
         return evaluate(getNextExpr(string, string.lastIndexOf(operations.Exponentiation), operations.Exponentiation));
@@ -483,7 +457,6 @@ function evaluate(string) {
     }
     else {
         console.log(`FINISHED CALCULATING-- -: ${string.trim()} `);
-        //alert(string);
         return string;
     }
 }
@@ -515,12 +488,6 @@ function getIndexForSubtract(string) {
     else if (string.match(/\-.+\-/i)) {
         indexOfOperator = string.lastIndexOf(operations.Subtract);
     }
-    // for (let item of possibleIndexes) {
-    //     alert(`string: ${ string }, possible '-' at index: ${ item }, typeof ${ typeof item } `);
-    // }
-    // for (let item of invalidIndexes) {
-    //     alert(`string: ${ string }, invalid '-' at index: ${ item }, typeof ${ typeof item } `);
-    // }
     return indexOfOperator;
 }
 function getInnerMostExpression(string) {
@@ -528,10 +495,8 @@ function getInnerMostExpression(string) {
     const subExprStart = string.indexOf('(');
     const subExprEnd = string.indexOf(')');
     if (string.slice(subExprStart, subExprEnd).includes('(')) {
-        //console.log('need to find the innermost (');
-        // 6.89e-5+8.744e-8*3500009.33/(2^3-(6/3+(4/2^3+3.5)))
         console.log(`starting index: ${subExprStart}, string: ${string}, string.length: ${string.length}, and subExprEnd: ${subExprEnd} `)
-        for (let i = 1; i <= subExprEnd - subExprStart -1; i++) {
+        for (let i = 1; i <= subExprEnd - subExprStart - 1; i++) {
             const char = string[i];
             let subStr = string.slice(subExprStart + i, subExprEnd);
             console.log(`char: ${char} and subStr ${subStr} `)
@@ -554,17 +519,11 @@ function getInnerMostExpression(string) {
 function getSubStrIndexes(indexOfOperator, string) {
     let startIndex = 0, endIndex = 0, i = 1, adjustment = 0, nextCharIndex = indexOfOperator;
     let matchFound = true, operator = string[indexOfOperator];
-    //console.log(`starting: string: ${ string } and indexOfOperator: ${ indexOfOperator }, i: ${ i }, and string[nextCharIndex: ${ string[nextCharIndex] } `)
     //!Left side of operator
     while (matchFound) {
         nextCharIndex = indexOfOperator - i;
-        // if (operator == '-') {
-        //     matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9\.\-e ]/i);
-        // }
-        // else {
         if (i == 1) {
             matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9\) ]/i);
-
         }
         else {
             matchFound = string[(nextCharIndex > 0) ? nextCharIndex : 0].match(/[0-9\.\-e ]/i);
@@ -610,10 +569,6 @@ function getSubStrIndexes(indexOfOperator, string) {
                 //console.log(`i - 2: ${i} and matchfound: ${matchFound} `);
 
             }
-            // else if (string[nextCharIndex + 1] == '-') {
-            //     matchFound = string[nextCharIndex].match(/[0-9.\( ]/i);
-            //     console.log(`i - 3: ${ i } and matchfound: ${ matchFound } `);
-            // }
             else {
                 matchFound = string[nextCharIndex].match(/[0-9.\( ]/i);
                 //console.log(`i - 3: ${i} and matchfound: ${matchFound} `);
@@ -668,25 +623,13 @@ function getSubStrIndexes(indexOfOperator, string) {
             endIndex = nextCharIndex;
             //console.log(`SAVING ENDINDEX --- matchfound: ${matchFound} and endIndex: ${endIndex} `)
         }
-        // else {
-        //     console.log('breaking right');
-        //     break;
-        // }
+
         i++;
         if (i > string.length - indexOfOperator - 1 || negativeSignCount > 1) {
             //console.log('breaking right');
             break;
         }
     }
-
-    // this is a band-aid because I can't figure out how to get the left side of getSubStrIndexes while loop right.
-    // let firstSubStrExprChar = string.slice(startIndex, endIndex + 1)[0];
-    // console.log(firstSubStrExprChar)
-    // if (!firstSubStrExprChar.match(/[\.0-9\-]/i) && firstSubStrExprChar) {
-    //     startIndex += 1;
-    // }
-    //console.log(`GETTING INDEXES END-- - match ${matchFound}, startIndex: ${startIndex} endIndex: ${endIndex}, and indexOfOperator ${indexOfOperator} `)
-    //console.log(`string: ${ string }, startIndex: ${ startIndex }, endIndex: ${ endIndex }, and firstSubStrExprChar: ${ firstSubStrExprChar } `);
     return [startIndex, endIndex];
 }
 function getNextExpr(string, indexOfOperator, operation) {
@@ -696,13 +639,6 @@ function getNextExpr(string, indexOfOperator, operation) {
     let n2 = string.slice(indexOfOperator + 1, indexes[1] + 1);
     let n1Replace = n1.includes('e');
     let n2Replace = n2.includes('e');
-    // if (n1Replace || n2Replace) {
-    //     console.log(`OPERATION: ${ operation } and indexOfOperator: ${ indexOfOperator } ----- Handling e with n1: ${ n1 } and n2: ${ n2 } `);
-    //     let newNumbers = handleE(n1, n2, n1Replace, n2Replace);
-    //     n1 = newNumbers[0];
-    //     n2 = newNumbers[1];
-    // }
-
     if (operation === operations.Exponentiation) {
         subStrExprResult = exponentiate(n1, n2);
     }
@@ -724,19 +660,9 @@ function getNextExpr(string, indexOfOperator, operation) {
         console.log(`ADDING INITIAL '+' -- - subStrExpr: ${subStrExpr} and subStrExprResult: ${subStrExprResult} `);
         subStrExprResult = '+' + subStrExprResult;
     }
-
-    //alert(1);
     nextExpr = string.replace(subStrExpr, subStrExprResult);
     nextExpr.replace('^+', '^');
-
-    //!removes initial '-' sign if it is at the beginning of the nextExpr and not part of another expression
-    //console.log(`nextExpr: ${ nextExpr } `)
-    // if (nextExpr[0] == '-' && (nextExpr.slice(1).includes('-') || nextExpr.includes('+') || nextExpr.includes('*') || nextExpr.includes('/') || nextExpr.includes('^'))) {
-    //     console.log(`REMOVING INITIAL '-' -- - nextExpr: ${ nextExpr } `)
-    //     nextExpr = nextExpr.slice(1);
-    // }
     console.log(`SENDING TO CALCULATE----string: ${string}, operation: ${operation}, n1: ${n1} n2: ${n2}, and subStrExprResult ${subStrExprResult} \nNEXT EXPRESSION----${nextExpr} `);
-    //console.log(`NEXT EXPRESSION----${ nextExpr } `);
     return nextExpr;
 }
 // alert(getIndexForSubtract("-4.52e-5/3e-5.4-10"))
@@ -745,12 +671,10 @@ function getNextExpr(string, indexOfOperator, operation) {
 // alert(`multiply: ${ multiply("452", "3e-5.4") } `);
 // alert(`divide: ${ divide("452", "3e-5.4") } `);
 // alert(`add: ${ add("452", "3e-5.4") } `);
-// alert(`subtract: ${ subtract("452", "3e-5.4") } `);
-
-//#endregion 
+// alert(`subtract: ${ subtract("452", "3e-5.4") } `);//#endregion 
 //#region Testing
 const tests = [
-    "10e5", "1.4e-5",
+    "10e5", "1.4e-5", "5^32",
     "-9.313225746154785e-10-4", "-9.313225746154785e-10+4", "(-9.313225746154785e-10)*4", "-9.313225746154785e-10/4", "-9.313225746154785e-10^4", "-1.0e3/10",
     "9*&#2", "9*+-2", "9/+-2", "9-+*2", "9^+-2", "9e+-2",
     "9*^4", "9*/4", "9**4", "9*e4", "9*+4", "9*-4",
@@ -770,7 +694,7 @@ const tests = [
     // "4.52e-5/3e-5.4", "452/3e-5.4-2.1-6.3",
 ];
 const expected = [
-    "10e5", "1.4e-5",
+    "10e5", "1.4e-5", "2.3283064365386964e+22",
     `${subtract("-9.313225746154785e-10", "4")}`, `${add("-9.313225746154785e-10", "4")}`, `${multiply("-9.313225746154785e-10", "4")}`, `${divide("-9.313225746154785e-10", "4")}`, `${exponentiate("-9.313225746154785e-10", "4")}`, "-100",
     "Stopped", "Stopped", "Stopped", "Stopped", "Stopped", "Stopped",
     "Stopped", "Stopped", "Stopped", "Stopped", "36", "-36",

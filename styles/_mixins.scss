@@ -1,0 +1,8 @@
+@mixin alignChildren($justify:center, $align:center) {
+  justify-content: $justify;
+  align-items: $align;
+}
+@mixin alignSelf($justify:center, $align:center) {
+  justify-self: $justify;
+  align-self: $align;
+}
